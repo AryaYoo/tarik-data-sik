@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Repositories\FarmasiRepository;
+use App\Models\ExtractionLog;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class FarmasiController extends Controller
+{
+    protected $farmasiRepository;
+
+    public function __construct(FarmasiRepository $farmasiRepository)
+    {
+        $this->farmasiRepository = $farmasiRepository;
+    }
+
+    public function index(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+        $kd_pj = $request->kd_pj;
+        $avgSeconds = null;
+
+        $penjabs = DB::table('penjab')->select('kd_pj', 'png_jawab')->orderBy('png_jawab', 'asc')->get();
+
+        $data = null;
+        if ($request->has('tgl_mulai')) {
+            // Log the extraction
+            ExtractionLog::create([
+                'username' => Auth::user()->username ?? Auth::user()->name,
+                'filter_date' => $tgl_mulai,
+                'extraction_type' => 'Waktu Tunggu Ralan Farmasi',
+            ]);
+
+            $data = $this->farmasiRepository->getWaktuTungguRalan($tgl_mulai, $tgl_selesai, $kd_pj)
+                ->paginate(20)
+                ->appends($request->all());
+            
+            $avgSeconds = $this->farmasiRepository->getAverageWaktuTunggu($tgl_mulai, $tgl_selesai, $kd_pj);
+        }
+
+        return view('farmasi.waktu_tunggu_ralan.index', compact('data', 'tgl_mulai', 'tgl_selesai', 'kd_pj', 'penjabs', 'avgSeconds'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai;
+        $tgl_selesai = $request->tgl_selesai;
+        $kd_pj = $request->kd_pj;
+
+        $data = $this->farmasiRepository->getWaktuTungguRalan($tgl_mulai, $tgl_selesai, $kd_pj)->get();
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\FarmasiExport($data), "waktu-tunggu-farmasi-$tgl_mulai-$tgl_selesai.xlsx");
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai;
+        $tgl_selesai = $request->tgl_selesai;
+        $kd_pj = $request->kd_pj;
+
+        $data = $this->farmasiRepository->getWaktuTungguRalan($tgl_mulai, $tgl_selesai, $kd_pj)->get();
+        $avgSeconds = $this->farmasiRepository->getAverageWaktuTunggu($tgl_mulai, $tgl_selesai, $kd_pj);
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.waktu_tunggu_ralan.pdf', compact('data', 'tgl_mulai', 'tgl_selesai', 'avgSeconds'));
+        return $pdf->download("waktu-tunggu-farmasi-$tgl_mulai-$tgl_selesai.pdf");
+    }
+}
