@@ -54,4 +54,175 @@ class FarmasiRepository
             ))) as avg_seconds")
         )->first()->avg_seconds;
     }
+
+    // ==========================================
+    // EXTRACTION RAWAT INAP
+    // ==========================================
+    
+    public function getRanapQuery($startDate, $endDate)
+    {
+        return DB::table('kamar_inap')
+            ->join('reg_periksa', 'kamar_inap.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
+            ->leftJoin('resume_pasien_ranap', 'kamar_inap.no_rawat', '=', 'resume_pasien_ranap.no_rawat')
+            ->whereBetween('kamar_inap.tgl_masuk', [$startDate, $endDate])
+            ->select([
+                'kamar_inap.no_rawat',
+                'pasien.nm_pasien',
+                DB::raw("CONCAT(reg_periksa.umurdaftar, ' ', reg_periksa.sttsumur) as umur"),
+                'pasien.jk',
+                'resume_pasien_ranap.prosedur_utama',
+                'resume_pasien_ranap.diagnosa_utama',
+                DB::raw("SUM(kamar_inap.lama) as lama")
+            ])
+            ->groupBy(
+                'kamar_inap.no_rawat',
+                'pasien.nm_pasien',
+                'reg_periksa.umurdaftar',
+                'reg_periksa.sttsumur',
+                'pasien.jk',
+                'resume_pasien_ranap.prosedur_utama',
+                'resume_pasien_ranap.diagnosa_utama'
+            )
+            ->orderBy('kamar_inap.tgl_masuk', 'desc');
+    }
+
+    public function getInstruksi($noRawatList)
+    {
+        return DB::table('pemeriksaan_ranap')
+            ->whereIn('no_rawat', $noRawatList)
+            ->whereNotNull('instruksi')
+            ->where('instruksi', '!=', '')
+            ->select('no_rawat', 'jam_rawat', 'instruksi')
+            ->orderBy('tgl_perawatan', 'asc')
+            ->orderBy('jam_rawat', 'asc')
+            ->get()
+            ->groupBy('no_rawat');
+    }
+
+    // ==========================================
+    // EXTRACTION RAWAT JALAN
+    // ==========================================
+    
+    public function getRalanQuery($startDate, $endDate)
+    {
+        return DB::table('reg_periksa')
+            ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
+            ->where('reg_periksa.status_lanjut', 'Ralan')
+            ->whereBetween('reg_periksa.tgl_registrasi', [$startDate, $endDate])
+            ->select([
+                'reg_periksa.no_rawat',
+                'pasien.nm_pasien',
+                DB::raw("CONCAT(reg_periksa.umurdaftar, ' ', reg_periksa.sttsumur) as umur"),
+                'pasien.jk'
+            ])
+            ->orderBy('reg_periksa.tgl_registrasi', 'desc');
+    }
+
+    public function getObatRalan($noRawatList)
+    {
+        return DB::table('detail_pemberian_obat')
+            ->join('databarang', 'detail_pemberian_obat.kode_brng', '=', 'databarang.kode_brng')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->whereIn('detail_pemberian_obat.no_rawat', $noRawatList)
+            ->select('detail_pemberian_obat.no_rawat', 'databarang.nama_brng', 'kodesatuan.satuan', DB::raw("SUM(detail_pemberian_obat.jml) as jml"))
+            ->groupBy('detail_pemberian_obat.no_rawat', 'databarang.nama_brng', 'kodesatuan.satuan')
+            ->get()
+            ->groupBy('no_rawat');
+    }
+
+    // ==========================================
+    // PEMBERIAN OBAT & BHP
+    // ==========================================
+    
+    public function getPemberianQuery($startDate, $endDate)
+    {
+        return DB::table('detail_pemberian_obat')
+            ->join('databarang', 'detail_pemberian_obat.kode_brng', '=', 'databarang.kode_brng')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->whereBetween('detail_pemberian_obat.tgl_perawatan', [$startDate, $endDate])
+            ->select([
+                'databarang.nama_brng as barang',
+                'kodesatuan.satuan',
+                DB::raw('SUM(detail_pemberian_obat.jml) as jumlah')
+            ])
+            ->groupBy('databarang.nama_brng', 'kodesatuan.satuan');
+    }
+
+    public function getPemberianDetails($startDate, $endDate)
+    {
+        return DB::table('detail_pemberian_obat')
+            ->join('databarang', 'detail_pemberian_obat.kode_brng', '=', 'databarang.kode_brng')
+            ->join('reg_periksa', 'detail_pemberian_obat.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('dokter', 'reg_periksa.kd_dokter', '=', 'dokter.kd_dokter')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->whereBetween('detail_pemberian_obat.tgl_perawatan', [$startDate, $endDate])
+            ->select([
+                'databarang.nama_brng as barang',
+                'dokter.nm_dokter as dokter',
+                'kodesatuan.satuan',
+                DB::raw('SUM(detail_pemberian_obat.jml) as jumlah')
+            ])
+            ->groupBy('databarang.nama_brng', 'dokter.nm_dokter', 'kodesatuan.satuan')
+            ->get()
+            ->groupBy('barang');
+    }
+
+    // ==========================================
+    // PENERIMAAN OBAT & BHP FARMASI
+    // ==========================================
+    
+    public function getPenerimaanQuery($startDate, $endDate)
+    {
+        // Dalam SIMKES Khanza, data penerimaan/pemesanan barang biasanya 
+        // dicatat di tabel detailpesan dan pemesanan
+        return DB::table('detailpesan')
+            ->join('pemesanan', 'detailpesan.no_faktur', '=', 'pemesanan.no_faktur')
+            ->join('databarang', 'detailpesan.kode_brng', '=', 'databarang.kode_brng')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->whereBetween('pemesanan.tgl_pesan', [$startDate, $endDate])
+            ->select([
+                'databarang.nama_brng as barang',
+                'kodesatuan.satuan',
+                DB::raw('SUM(detailpesan.jumlah) as jumlah')
+            ])
+            ->groupBy('databarang.nama_brng', 'kodesatuan.satuan');
+    }
+
+    // ==========================================
+    // HARGA BARANG
+    // ==========================================
+    
+    public function getHargaBarangQuery($search = null)
+    {
+        $query = DB::table('databarang')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->select([
+                'databarang.kode_brng',
+                'databarang.nama_brng',
+                'kodesatuan.satuan',
+                'databarang.dasar',
+                'databarang.h_beli',
+                'databarang.ralan',
+                'databarang.kelas1',
+                'databarang.kelas2',
+                'databarang.kelas3',
+                'databarang.utama',
+                'databarang.vip',
+                'databarang.vvip',
+                'databarang.beliluar',
+                'databarang.jualbebas',
+                'databarang.karyawan',
+                'databarang.status'
+            ]);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('databarang.kode_brng', 'like', "%{$search}%")
+                  ->orWhere('databarang.nama_brng', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->orderBy('databarang.nama_brng', 'asc');
+    }
 }

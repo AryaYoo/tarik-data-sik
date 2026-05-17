@@ -110,7 +110,7 @@
                         </div>
 
                         <!-- Farmasi Menu -->
-                        <div x-data="{ open: {{ request()->routeIs('extraction.*') || request()->routeIs('extraction_ralan.*') || request()->routeIs('pemberian_obat.*') || request()->routeIs('penerimaan_obat_farmasi.*') || request()->routeIs('farmasi.waktu_tunggu_ralan.*') ? 'true' : 'false' }} }"
+                        <div x-data="{ open: {{ request()->routeIs('extraction.*') || request()->routeIs('extraction_ralan.*') || request()->routeIs('pemberian_obat.*') || request()->routeIs('penerimaan_obat_farmasi.*') || request()->routeIs('farmasi.waktu_tunggu_ralan.*') || request()->routeIs('farmasi.harga_barang.*') ? 'true' : 'false' }} }"
                             class="space-y-1">
                             <button @click="open = !open"
                                 class="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl hover:bg-white/10 transition text-left">
@@ -150,6 +150,10 @@
                                 <a href="{{ route('farmasi.waktu_tunggu_ralan.index') }}"
                                     class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('farmasi.waktu_tunggu_ralan.*') ? 'text-white font-bold bg-white/20' : '' }}">
                                     Waktu Tunggu Rawat Jalan
+                                </a>
+                                <a href="{{ route('farmasi.harga_barang.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('farmasi.harga_barang.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Tarik Harga Barang
                                 </a>
                             </div>
                         </div>

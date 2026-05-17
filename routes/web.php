@@ -21,6 +21,7 @@ use App\Http\Controllers\PemberianObatController;
 use App\Http\Controllers\PenerimaanObatFarmasiController;
 use App\Http\Controllers\LaboratoriumController;
 use App\Http\Controllers\FarmasiController;
+use App\Http\Controllers\HargaBarangController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -59,6 +60,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/waktu-tunggu-ralan', [FarmasiController::class, 'index'])->name('farmasi.waktu_tunggu_ralan.index');
     Route::get('/waktu-tunggu-ralan/export/excel', [FarmasiController::class, 'exportExcel'])->name('farmasi.waktu_tunggu_ralan.export.excel');
     Route::get('/waktu-tunggu-ralan/export/pdf', [FarmasiController::class, 'exportPdf'])->name('farmasi.waktu_tunggu_ralan.export.pdf');
+
+    // Harga Barang
+    Route::get('/harga-barang', [HargaBarangController::class, 'index'])->name('farmasi.harga_barang.index');
+    Route::get('/harga-barang/export/excel', [HargaBarangController::class, 'exportExcel'])->name('farmasi.harga_barang.export.excel');
+    Route::get('/harga-barang/export/pdf', [HargaBarangController::class, 'exportPdf'])->name('farmasi.harga_barang.export.pdf');
 
     // Laboratorium
     Route::get('/laboratorium-ralan', [LaboratoriumController::class, 'index'])->name('laboratorium.index');
