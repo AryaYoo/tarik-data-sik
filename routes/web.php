@@ -66,6 +66,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/harga-barang/export/excel', [HargaBarangController::class, 'exportExcel'])->name('farmasi.harga_barang.export.excel');
     Route::get('/harga-barang/export/pdf', [HargaBarangController::class, 'exportPdf'])->name('farmasi.harga_barang.export.pdf');
 
+    // Waktu Tunggu Rawat Jalan BPJS
+    Route::get('/waktu-tunggu-bpjs', [FarmasiController::class, 'waktuTungguBpjs'])->name('farmasi.waktu_tunggu_bpjs.index');
+    Route::get('/waktu-tunggu-bpjs/export/excel', [FarmasiController::class, 'exportBpjsExcel'])->name('farmasi.waktu_tunggu_bpjs.export.excel');
+    Route::get('/waktu-tunggu-bpjs/export/pdf', [FarmasiController::class, 'exportBpjsPdf'])->name('farmasi.waktu_tunggu_bpjs.export.pdf');
+
+    // Sirkulasi Obat Farmasi
+    Route::get('/sirkulasi-obat', [FarmasiController::class, 'sirkulasiIndex'])->name('farmasi.sirkulasi.index');
+    Route::get('/sirkulasi-obat/export/excel', [FarmasiController::class, 'sirkulasiExportExcel'])->name('farmasi.sirkulasi.export.excel');
+    Route::get('/sirkulasi-obat/export/pdf', [FarmasiController::class, 'sirkulasiExportPdf'])->name('farmasi.sirkulasi.export.pdf');
+
     // Laboratorium
     Route::get('/laboratorium-ralan', [LaboratoriumController::class, 'index'])->name('laboratorium.index');
     Route::get('/laboratorium-ranap', [LaboratoriumController::class, 'index_ranap'])->name('laboratorium.index_ranap');

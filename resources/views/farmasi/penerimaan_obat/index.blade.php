@@ -4,9 +4,18 @@
     <div class="space-y-6">
         <!-- Header -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Rekap Penerimaan Obat dan BHP - Farmasi</h2>
-                <p class="text-gray-500 text-sm mt-1">Laporan rekapitulasi pengadaan obat dan barang medis habis pakai.</p>
+            <div class="flex items-center gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Rekap Penerimaan Obat dan BHP - Farmasi</h2>
+                        <button type="button" onclick="openInfoModal()" class="text-primary hover:text-green-800 transition duration-150 focus:outline-none" title="Informasi Formula & Sumber Data">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1">Laporan rekapitulasi pengadaan obat dan barang medis habis pakai.</p>
+                </div>
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -174,4 +183,125 @@
             </div>
         @endif
     </div>
+
+    <!-- Modal Informasi Rekap Penerimaan Obat -->
+    <div id="infoModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Overlay -->
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeInfoModal()"></div>
+
+            <!-- Center modal content -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
+                <!-- Header -->
+                <div class="bg-primary px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="text-lg font-black uppercase tracking-wider">Informasi Rekap Penerimaan Obat & BHP</h3>
+                    </div>
+                    <button onclick="closeInfoModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">1. Deskripsi Menu</h4>
+                        <p class="text-sm text-gray-600 leading-relaxed">
+                            Menu **Rekap Penerimaan Obat dan BHP** menyajikan ringkasan laporan mengenai kuantitas fisik barang masuk (pengadaan/pemesanan) dari pemasok ke gudang farmasi selama rentang periode saring. Fitur ini mempermudah pelacakan volume barang yang diadakan untuk dianalisis oleh pihak manajemen.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">2. Aturan & Rumus Kalkulasi</h4>
+                        <ul class="list-disc pl-5 space-y-4 text-sm text-gray-600">
+                            <li>
+                                <strong>Total Penerimaan:</strong> Akumulasi jumlah kuantitas barang medis yang secara resmi masuk ke depo melalui faktur pengadaan selama periode filter.
+                                <div class="mt-1.5 bg-gray-50 p-2.5 rounded-xl border border-gray-100 font-mono text-[10px] text-gray-700 shadow-inner">
+                                    <strong class="text-primary text-[11px]">Formula Matematika:</strong> Total Penerimaan = Σ (Kuantitas Masuk pada Faktur)<br>
+                                    <strong class="text-primary text-[11px]">Formula Excel:</strong> <code class="text-red-600 font-bold">=SUM(Kuantitas_Fisik_Semua_Faktur)</code>
+                                </div>
+                            </li>
+                            <li>
+                                <strong>Top Rank (Peringkat Pengadaan):</strong> Menyaring 5 obat/BHP dengan volume penerimaan pengadaan paling besar untuk dianalisis di panel ringkasan bagian atas halaman secara real-time.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">3. Pemetaan Basis Data (SIMRS Khanza)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-gray-100">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-100">
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom UI</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Tabel</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Kolom</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan / Deskripsi Tabel</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Nama Barang / Item</td>
+                                        <td class="p-2 font-mono text-primary">databarang</td>
+                                        <td class="p-2 font-mono text-primary">nama_brng</td>
+                                        <td class="p-2 text-gray-600">Nama resmi dari obat atau barang habis pakai medis.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Satuan</td>
+                                        <td class="p-2 font-mono text-primary">kodesatuan</td>
+                                        <td class="p-2 font-mono text-primary">satuan</td>
+                                        <td class="p-2 text-gray-600">Satuan kemasan terkecil barang.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Total Penerimaan</td>
+                                        <td class="p-2 font-mono text-primary">detailpesan</td>
+                                        <td class="p-2 font-mono text-primary">SUM(jumlah)</td>
+                                        <td class="p-2 text-gray-600">Jumlah kuantitas barang masuk pada faktur pesanan.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Tanggal Saring</td>
+                                        <td class="p-2 font-mono text-primary">pemesanan</td>
+                                        <td class="p-2 font-mono text-primary">tgl_pesan</td>
+                                        <td class="p-2 text-gray-600">Penyaringan data menggunakan kondisi `whereBetween` pada tanggal transaksi pemesanan.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Kunci Relasi</td>
+                                        <td class="p-2 font-mono text-primary">detailpesan, pemesanan</td>
+                                        <td class="p-2 font-mono text-primary">no_faktur</td>
+                                        <td class="p-2 text-gray-600">Kunci utama penghubung tabel detail pesanan ke master pemesanan.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                    <button onclick="closeInfoModal()" class="bg-primary hover:bg-green-800 text-white font-bold px-6 py-2 rounded-xl text-sm transition focus:outline-none">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openInfoModal() {
+            document.getElementById('infoModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    </script>
 @endsection

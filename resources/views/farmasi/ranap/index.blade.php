@@ -4,9 +4,18 @@
     <div class="space-y-6">
         <!-- Header -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Penarikan Data Rawat Inap - Farmasi</h2>
-                <p class="text-gray-500 text-sm mt-1">Ekstraksi data terapi, diagnosa, dan instruksi medis pasien rawat inap.</p>
+            <div class="flex items-center gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Penarikan Data Rawat Inap - Farmasi</h2>
+                        <button type="button" onclick="openInfoModal()" class="text-primary hover:text-green-800 transition duration-150 focus:outline-none" title="Informasi Formula & Sumber Data">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1">Ekstraksi data terapi, diagnosa, dan instruksi medis pasien rawat inap.</p>
+                </div>
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -183,6 +192,121 @@
         @endif
     </div>
 
+    <!-- Modal Informasi Penarikan Data Rawat Inap -->
+    <div id="infoModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Overlay -->
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeInfoModal()"></div>
+
+            <!-- Center modal content -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
+                <!-- Header -->
+                <div class="bg-primary px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="text-lg font-black uppercase tracking-wider">Informasi Penarikan Data Rawat Inap</h3>
+                    </div>
+                    <button onclick="closeInfoModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">1. Deskripsi Menu</h4>
+                        <p class="text-sm text-gray-600 leading-relaxed">
+                            Menu **Penarikan Data Rawat Inap** digunakan untuk menarik rekam medis klinis dari pasien rawat inap pada periode perawatan yang dipilih. Laporan ini mencakup data terapi obat utama, prosedur utama, diagnosa ICD-10, lama hari rawat inap (LOS - Length of Stay), serta instruksi medis langsung dari dokter penanggung jawab.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">2. Aturan & Rumus Kalkulasi</h4>
+                        <ul class="list-disc pl-5 space-y-4 text-sm text-gray-600">
+                            <li>
+                                <strong>Lama Rawat (LOS - Length of Stay):</strong> Jumlah total hari rawat inap pasien di kamar perawatan rumah sakit selama masa filter.
+                                <div class="mt-1.5 bg-gray-50 p-2.5 rounded-xl border border-gray-100 font-mono text-[10px] text-gray-700 shadow-inner">
+                                    <strong class="text-primary text-[11px]">Formula Matematika:</strong> Lama Rawat = Σ (kamar_inap.lama)<br>
+                                    <strong class="text-primary text-[11px]">Formula Excel:</strong> <code class="text-red-600 font-bold">=SUM(Lama_Hari_Inap)</code>
+                                </div>
+                            </li>
+                            <li>
+                                <strong>Instruksi Medis:</strong> Tombol interaktif menampilkan daftar lengkap baris instruksi medis/keperawatan beserta jam rawat yang dimasukkan oleh tim klinis secara real-time.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">3. Pemetaan Basis Data (SIMRS Khanza)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-gray-100">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-100">
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom UI</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Tabel</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Kolom</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan / Kondisi SQL</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">No. Rawat</td>
+                                        <td class="p-2 font-mono text-primary">kamar_inap</td>
+                                        <td class="p-2 font-mono text-primary">no_rawat</td>
+                                        <td class="p-2 text-gray-600">Nomor registrasi unik perawatan rawat inap.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Nama Pasien</td>
+                                        <td class="p-2 font-mono text-primary">pasien</td>
+                                        <td class="p-2 font-mono text-primary">nm_pasien</td>
+                                        <td class="p-2 text-gray-600">Nama lengkap pasien.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Diagnosa & Prosedur</td>
+                                        <td class="p-2 font-mono text-primary">resume_pasien_ranap</td>
+                                        <td class="p-2 font-mono text-primary">diagnosa_utama, prosedur_utama</td>
+                                        <td class="p-2 text-gray-600">Kode ICD-10 untuk diagnosa utama dan ICD-9-CM untuk prosedur medis.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Lama Rawat</td>
+                                        <td class="p-2 font-mono text-primary">kamar_inap</td>
+                                        <td class="p-2 font-mono text-primary">SUM(lama)</td>
+                                        <td class="p-2 text-gray-600">Akumulasi jumlah hari perawatan rawat inap.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Instruksi Medis</td>
+                                        <td class="p-2 font-mono text-primary">pemeriksaan_ranap</td>
+                                        <td class="p-2 font-mono text-primary">jam_rawat, instruksi</td>
+                                        <td class="p-2 text-gray-600">Kueri dibatasi status instruksi tidak kosong (`whereNotNull('instruksi')`).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Filter Tanggal</td>
+                                        <td class="p-2 font-mono text-primary">kamar_inap</td>
+                                        <td class="p-2 font-mono text-primary">tgl_masuk</td>
+                                        <td class="p-2 text-gray-600">Penyaringan data berdasarkan periode tanggal masuk kamar rawat inap.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                    <button onclick="closeInfoModal()" class="bg-primary hover:bg-green-800 text-white font-bold px-6 py-2 rounded-xl text-sm transition focus:outline-none">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleInstruksi(rowId) {
             const row = document.getElementById(rowId);
@@ -192,6 +316,16 @@
             row.classList.toggle('hidden', !isHidden);
             icon.textContent = isHidden ? '▼' : '▶';
             icon.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+        }
+
+        function openInfoModal() {
+            document.getElementById('infoModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+            document.body.style.overflow = '';
         }
     </script>
 @endsection

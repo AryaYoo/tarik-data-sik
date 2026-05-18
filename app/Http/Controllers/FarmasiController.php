@@ -67,4 +67,92 @@ class FarmasiController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.waktu_tunggu_ralan.pdf', compact('data', 'tgl_mulai', 'tgl_selesai', 'avgSeconds'));
         return $pdf->download("waktu-tunggu-farmasi-$tgl_mulai-$tgl_selesai.pdf");
     }
+
+    public function waktuTungguBpjs(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+        $avgSeconds = null;
+
+        $data = null;
+        if ($request->has('tgl_mulai')) {
+            // Log the extraction
+            ExtractionLog::create([
+                'username' => Auth::user()->username ?? Auth::user()->name,
+                'filter_date' => $tgl_mulai,
+                'extraction_type' => 'Waktu Tunggu Ralan Farmasi BPJS',
+            ]);
+
+            $data = $this->farmasiRepository->getWaktuTungguBpjs($tgl_mulai, $tgl_selesai)
+                ->paginate(20)
+                ->appends($request->all());
+            
+            $avgSeconds = $this->farmasiRepository->getAverageWaktuTungguBpjs($tgl_mulai, $tgl_selesai);
+        }
+
+        return view('farmasi.waktu_tunggu_bpjs.index', compact('data', 'tgl_mulai', 'tgl_selesai', 'avgSeconds'));
+    }
+
+    public function exportBpjsExcel(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai;
+        $tgl_selesai = $request->tgl_selesai;
+
+        $data = $this->farmasiRepository->getWaktuTungguBpjs($tgl_mulai, $tgl_selesai)->get();
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\FarmasiExport($data), "waktu-tunggu-farmasi-bpjs-$tgl_mulai-$tgl_selesai.xlsx");
+    }
+
+    public function exportBpjsPdf(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai;
+        $tgl_selesai = $request->tgl_selesai;
+
+        $data = $this->farmasiRepository->getWaktuTungguBpjs($tgl_mulai, $tgl_selesai)->get();
+        $avgSeconds = $this->farmasiRepository->getAverageWaktuTungguBpjs($tgl_mulai, $tgl_selesai);
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.waktu_tunggu_bpjs.pdf', compact('data', 'tgl_mulai', 'tgl_selesai', 'avgSeconds'));
+        return $pdf->download("waktu-tunggu-farmasi-bpjs-$tgl_mulai-$tgl_selesai.pdf");
+    }
+
+    public function sirkulasiIndex(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+
+        $data = null;
+        if ($request->has('tgl_mulai')) {
+            // Log the extraction
+            ExtractionLog::create([
+                'username' => Auth::user()->username ?? Auth::user()->name,
+                'filter_date' => $tgl_mulai,
+                'extraction_type' => 'Perputaran Obat',
+            ]);
+
+            $data = $this->farmasiRepository->getSirkulasiObatQuery($tgl_mulai, $tgl_selesai)
+                ->paginate(20)
+                ->appends($request->all());
+        }
+
+        return view('farmasi.sirkulasi.index', compact('data', 'tgl_mulai', 'tgl_selesai'));
+    }
+
+    public function sirkulasiExportExcel(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai;
+        $tgl_selesai = $request->tgl_selesai;
+
+        $data = $this->farmasiRepository->getSirkulasiObatQuery($tgl_mulai, $tgl_selesai)->get();
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\SirkulasiObatExport($data), "perputaran-obat-$tgl_mulai-$tgl_selesai.xlsx");
+    }
+
+    public function sirkulasiExportPdf(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai;
+        $tgl_selesai = $request->tgl_selesai;
+
+        $data = $this->farmasiRepository->getSirkulasiObatQuery($tgl_mulai, $tgl_selesai)->get();
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.sirkulasi.pdf', compact('data', 'tgl_mulai', 'tgl_selesai'));
+        return $pdf->download("perputaran-obat-$tgl_mulai-$tgl_selesai.pdf");
+    }
 }

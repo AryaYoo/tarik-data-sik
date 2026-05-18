@@ -225,4 +225,106 @@ class FarmasiRepository
 
         return $query->orderBy('databarang.nama_brng', 'asc');
     }
+
+    public function getWaktuTungguBpjs($startDate, $endDate)
+    {
+        return DB::table('resep_obat')
+            ->join('reg_periksa', 'resep_obat.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
+            ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
+            ->where('resep_obat.status', 'ralan')
+            ->where('penjab.png_jawab', 'LIKE', '%BPJS%')
+            ->whereBetween('resep_obat.tgl_perawatan', [$startDate, $endDate])
+            ->select([
+                'pasien.nm_pasien',
+                'pasien.no_rkm_medis',
+                'penjab.png_jawab',
+                'resep_obat.tgl_perawatan',
+                'resep_obat.jam as jam_validasi',
+                'resep_obat.tgl_penyerahan',
+                'resep_obat.jam_penyerahan',
+                DB::raw("TIMEDIFF(
+                    CONCAT(resep_obat.tgl_penyerahan, ' ', resep_obat.jam_penyerahan), 
+                    CONCAT(resep_obat.tgl_perawatan, ' ', resep_obat.jam)
+                ) as total_waktu")
+            ])
+            ->orderBy('resep_obat.tgl_perawatan', 'desc')
+            ->orderBy('resep_obat.jam', 'desc');
+    }
+
+    public function getAverageWaktuTungguBpjs($startDate, $endDate)
+    {
+        return DB::table('resep_obat')
+            ->join('reg_periksa', 'resep_obat.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
+            ->where('resep_obat.status', 'ralan')
+            ->where('penjab.png_jawab', 'LIKE', '%BPJS%')
+            ->whereBetween('resep_obat.tgl_perawatan', [$startDate, $endDate])
+            ->select(
+                DB::raw("AVG(TIME_TO_SEC(TIMEDIFF(
+                    CONCAT(resep_obat.tgl_penyerahan, ' ', resep_obat.jam_penyerahan), 
+                    CONCAT(resep_obat.tgl_perawatan, ' ', resep_obat.jam)
+                ))) as avg_seconds")
+            )->first()->avg_seconds;
+    }
+
+    public function getSirkulasiObatQuery($startDate, $endDate)
+    {
+        // Shift procurement date range forward by 1 month (e.g. January filter pulls February procurement)
+        $carbonStart = \Carbon\Carbon::parse($startDate);
+        $carbonEnd = \Carbon\Carbon::parse($endDate);
+
+        if ($carbonStart->copy()->startOfMonth()->toDateString() === $startDate && 
+            $carbonEnd->copy()->endOfMonth()->toDateString() === $endDate) {
+            // Full month filter: shift to next full month
+            $procStartDate = $carbonStart->copy()->addMonthNoOverflow()->startOfMonth()->toDateString();
+            $procEndDate = $carbonEnd->copy()->addMonthNoOverflow()->endOfMonth()->toDateString();
+        } else {
+            // Custom range filter: shift by exactly 1 month
+            $procStartDate = $carbonStart->copy()->addMonthNoOverflow()->toDateString();
+            $procEndDate = $carbonEnd->copy()->addMonthNoOverflow()->toDateString();
+        }
+
+        return DB::table('databarang')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->whereExists(function ($query) use ($startDate, $endDate) {
+                $query->select(DB::raw(1))
+                    ->from('riwayat_barang_medis')
+                    ->whereColumn('riwayat_barang_medis.kode_brng', 'databarang.kode_brng')
+                    ->where('riwayat_barang_medis.status', 'Simpan')
+                    ->whereBetween('riwayat_barang_medis.tanggal', [$startDate, $endDate]);
+            })
+            ->select([
+                'databarang.kode_brng',
+                'databarang.nama_brng',
+                'kodesatuan.satuan',
+                'databarang.h_beli as harga_beli',
+                DB::raw("(
+                    SELECT r1.stok_awal 
+                    FROM riwayat_barang_medis r1 
+                    WHERE r1.kode_brng = databarang.kode_brng 
+                      AND r1.tanggal BETWEEN '$startDate' AND '$endDate' 
+                      AND r1.status = 'Simpan' 
+                    ORDER BY r1.tanggal ASC, r1.jam ASC 
+                    LIMIT 1
+                ) as stok_awal"),
+                DB::raw("(
+                    SELECT r2.stok_akhir 
+                    FROM riwayat_barang_medis r2 
+                    WHERE r2.kode_brng = databarang.kode_brng 
+                      AND r2.tanggal BETWEEN '$startDate' AND '$endDate' 
+                      AND r2.status = 'Simpan' 
+                    ORDER BY r2.tanggal DESC, r2.jam DESC 
+                    LIMIT 1
+                ) as stok_akhir"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(dp.jumlah), 0)
+                    FROM detailpesan dp
+                    JOIN pemesanan p ON dp.no_faktur = p.no_faktur
+                    WHERE dp.kode_brng = databarang.kode_brng
+                      AND p.tgl_pesan BETWEEN '$procStartDate' AND '$procEndDate'
+                ) as jumlah_pengadaan")
+            ])
+            ->orderBy('databarang.nama_brng', 'asc');
+    }
 }

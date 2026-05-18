@@ -4,9 +4,18 @@
     <div class="space-y-6">
         <!-- Header -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Tarik Harga Barang Farmasi</h2>
-                <p class="text-gray-500 text-sm mt-1">Ektraksi data harga obat dan BHP medis dari master tabel databarang.</p>
+            <div class="flex items-center gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Tarik Harga Barang Farmasi</h2>
+                        <button type="button" onclick="openInfoModal()" class="text-primary hover:text-green-800 transition duration-150 focus:outline-none" title="Informasi Fitur & Pemetaan Kolom">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1">Ekstraksi data harga obat dan BHP medis dari master tabel databarang.</p>
+                </div>
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -165,4 +174,124 @@
             </div>
         @endif
     </div>
+
+    <!-- Modal Informasi Tarik Harga Barang -->
+    <div id="infoModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Overlay -->
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeInfoModal()"></div>
+
+            <!-- Center modal content -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
+                <!-- Header -->
+                <div class="bg-primary px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="text-lg font-black uppercase tracking-wider">Informasi Tarik Harga Barang</h3>
+                    </div>
+                    <button onclick="closeInfoModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">1. Deskripsi Menu</h4>
+                        <p class="text-sm text-gray-600 leading-relaxed">
+                            Menu **Tarik Harga Barang Farmasi** dirancang khusus untuk mempermudah petugas melakukan ekstraksi dinamis terhadap data harga obat, alat kesehatan, dan BHP medis langsung dari master data inventaris rumah sakit.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">2. Fitur & Cara Penggunaan</h4>
+                        <ul class="list-disc pl-5 space-y-3 text-sm text-gray-600">
+                            <li>
+                                <strong>Pilihan Kolom Kustom (Dinamis):</strong> Anda dapat memilih kolom harga apa saja yang ingin Anda tampilkan dengan mencentang pilihan pada form filter di atas.
+                            </li>
+                            <li>
+                                <strong>Pencarian Multi-Kata Kunci:</strong> Kolom pencarian mendukung pencarian cepat berdasarkan **Nama Obat** atau **Kode Barang** sekaligus secara real-time.
+                            </li>
+                            <li>
+                                <strong>Ekspor Dinamis:</strong> Berkas Excel dan PDF yang diekspor secara cerdas akan mengikuti persis kolom harga yang Anda centang di layar saat ini.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">3. Pemetaan Basis Data (SIMRS Khanza)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-gray-100">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-100">
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom UI</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Tabel</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Kolom</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan / Deskripsi Kolom</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Kode Barang</td>
+                                        <td class="p-2 font-mono text-primary">databarang</td>
+                                        <td class="p-2 font-mono text-primary">kode_brng</td>
+                                        <td class="p-2 text-gray-600">Kode unik dari setiap obat/alkes.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Nama Barang</td>
+                                        <td class="p-2 font-mono text-primary">databarang</td>
+                                        <td class="p-2 font-mono text-primary">nama_brng</td>
+                                        <td class="p-2 text-gray-600">Nama resmi obat/alkes.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Satuan</td>
+                                        <td class="p-2 font-mono text-primary">kodesatuan</td>
+                                        <td class="p-2 font-mono text-primary">satuan</td>
+                                        <td class="p-2 text-gray-600">Satuan kemasan obat/alkes (contoh: Tablet, Botol).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Kolom Harga</td>
+                                        <td class="p-2 font-mono text-primary">databarang</td>
+                                        <td class="p-2 font-mono text-primary">h_beli, h_petugas,<br>h_umum, ralan, dll.</td>
+                                        <td class="p-2 text-gray-600">Nilai harga satuan obat berdasarkan kategori harga terpilih.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Status</td>
+                                        <td class="p-2 font-mono text-primary">databarang</td>
+                                        <td class="p-2 font-mono text-primary">status</td>
+                                        <td class="p-2 text-gray-600">Status ketersediaan barang (Aktif = 1 / Non-Aktif = 0).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                    <button onclick="closeInfoModal()" class="bg-primary hover:bg-green-800 text-white font-bold px-6 py-2 rounded-xl text-sm transition focus:outline-none">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openInfoModal() {
+            document.getElementById('infoModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    </script>
 @endsection

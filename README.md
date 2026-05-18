@@ -56,6 +56,13 @@ Struktur folder `resources/views` harus disusun berdasarkan unit kerja secara hi
     - Notifikasi "Berhasil" jika unduhan selesai.
     - Notifikasi "Gagal" beserta alasan teknisnya jika terjadi error pada server.
 
+### 7. Dokumentasi Bantuan & Penjelasan Sumber Data Halaman
+- **Kewajiban Dokumentasi**: Setiap penambahan fitur atau modul baru **WAJIB** dilengkapi dengan dokumentasi bantuan interaktif langsung di halaman terkait (menggunakan ikon bantuan hijau `i` di samping judul utama dan pop-up modal informasi yang menarik).
+- **Isi Dokumentasi Bantuan**:
+    - **Deskripsi Fitur**: Penjelasan fungsionalitas menu agar mudah dipahami oleh staf non-IT.
+    - **Formula Kalkulasi (Jika Ada)**: Sertakan formula matematika dasar serta contoh penulisan formula Excel (seperti `=AVERAGE(...)` atau `=F2-E2`) yang ramah pengguna. *Jika halaman tidak memiliki kalkulasi matematis/formula Excel, bagian ini tidak perlu dipaksakan.*
+    - **Pemetaan Basis Data (SIMRS Khanza)**: Cantumkan tabel transparan yang memetakan kolom tampilan UI ke nama tabel SQL, nama kolom SQL, serta keterangan filter kueri yang digunakan. Ini sangat penting untuk memfasilitasi audit trail dan transparansi data.
+
 ## Teknologi yang Digunakan
 - **Framework**: [Laravel 10](https://laravel.com)
 - **Frontend Logic**: [Alpine.js](https://alpinejs.dev)

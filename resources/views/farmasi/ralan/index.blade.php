@@ -4,9 +4,18 @@
     <div class="space-y-6">
         <!-- Header -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Penarikan Data Rawat Jalan - Farmasi</h2>
-                <p class="text-gray-500 text-sm mt-1">Ekstraksi data penggunaan obat dan BHP pasien rawat jalan.</p>
+            <div class="flex items-center gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Penarikan Data Rawat Jalan - Farmasi</h2>
+                        <button type="button" onclick="openInfoModal()" class="text-primary hover:text-green-800 transition duration-150 focus:outline-none" title="Informasi Formula & Sumber Data">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-1">Ekstraksi data penggunaan obat dan BHP pasien rawat jalan.</p>
+                </div>
             </div>
             <div class="flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -167,6 +176,111 @@
         @endif
     </div>
 
+    <!-- Modal Informasi Penarikan Data Rawat Jalan -->
+    <div id="infoModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Overlay -->
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeInfoModal()"></div>
+
+            <!-- Center modal content -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
+                <!-- Header -->
+                <div class="bg-primary px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="text-lg font-black uppercase tracking-wider">Informasi Penarikan Data Rawat Jalan</h3>
+                    </div>
+                    <button onclick="closeInfoModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">1. Deskripsi Menu</h4>
+                        <p class="text-sm text-gray-600 leading-relaxed">
+                            Menu **Penarikan Data Rawat Jalan** digunakan untuk mengekstraksi seluruh data penggunaan obat, alkes, dan barang habis pakai (BHP) medis dari pasien rawat jalan pada periode registrasi yang dipilih. Hal ini sangat berguna untuk melakukan audit terapi obat dan inventarisasi farmasi.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">2. Aturan & Perhitungan data</h4>
+                        <ul class="list-disc pl-5 space-y-3 text-sm text-gray-600">
+                            <li>
+                                <strong>Penyaringan Transaksi:</strong> Data ditarik berdasarkan periode **Tanggal Registrasi** pasien di unit rawat jalan.
+                            </li>
+                            <li>
+                                <strong>Detail Item Obat:</strong> Tombol interaktif menampilkan rincian nama obat beserta kuantitas fisik yang didistribusikan kepada masing-masing pasien secara real-time.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">3. Pemetaan Basis Data (SIMRS Khanza)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-gray-100">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-100">
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom UI</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Tabel</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Kolom</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan / Kondisi SQL</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">No. Rawat</td>
+                                        <td class="p-2 font-mono text-primary">reg_periksa</td>
+                                        <td class="p-2 font-mono text-primary">no_rawat</td>
+                                        <td class="p-2 text-gray-600">Nomor registrasi unik perawatan pasien.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Nama Pasien</td>
+                                        <td class="p-2 font-mono text-primary">pasien</td>
+                                        <td class="p-2 font-mono text-primary">nm_pasien</td>
+                                        <td class="p-2 text-gray-600">Nama lengkap pasien.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Jenis Kelamin</td>
+                                        <td class="p-2 font-mono text-primary">pasien</td>
+                                        <td class="p-2 font-mono text-primary">jk</td>
+                                        <td class="p-2 text-gray-600">JK pasien (L = Laki-laki, P = Perempuan).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Detail Terapi Obat</td>
+                                        <td class="p-2 font-mono text-primary">detail_pemberian_obat</td>
+                                        <td class="p-2 font-mono text-primary">kode_brng, jml</td>
+                                        <td class="p-2 text-gray-600">Nama obat terelasi ke master `databarang` dan total kuantitas diserahkan.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Filter Tanggal</td>
+                                        <td class="p-2 font-mono text-primary">reg_periksa</td>
+                                        <td class="p-2 font-mono text-primary">tgl_registrasi</td>
+                                        <td class="p-2 text-gray-600">Kueri dibatasi status registrasi `status_lanjut = 'Ralan'`.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                    <button onclick="closeInfoModal()" class="bg-primary hover:bg-green-800 text-white font-bold px-6 py-2 rounded-xl text-sm transition focus:outline-none">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleObat(rowId) {
             const row = document.getElementById(rowId);
@@ -176,6 +290,16 @@
             row.classList.toggle('hidden', !isHidden);
             icon.textContent = isHidden ? '▼' : '▶';
             icon.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+        }
+
+        function openInfoModal() {
+            document.getElementById('infoModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+            document.body.style.overflow = '';
         }
     </script>
 @endsection
