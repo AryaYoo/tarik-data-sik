@@ -154,5 +154,58 @@ class FarmasiController extends Controller
         
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.sirkulasi.pdf', compact('data', 'tgl_mulai', 'tgl_selesai'));
         return $pdf->download("perputaran-obat-$tgl_mulai-$tgl_selesai.pdf");
+     }
+
+    public function opnameIndex(Request $request)
+    {
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $kd_bangsal = $request->kd_bangsal;
+
+        // Fetch depots that have opname records
+        $depots = $this->farmasiRepository->getOpnameDepots();
+
+        $data = null;
+        if ($request->has('tanggal')) {
+            // Log the extraction
+            ExtractionLog::create([
+                'username' => Auth::user()->username ?? Auth::user()->name,
+                'filter_date' => $tanggal,
+                'extraction_type' => 'Stock Opname Farmasi',
+            ]);
+
+            $data = $this->farmasiRepository->getOpnameQuery($tanggal, $kd_bangsal)
+                ->paginate(20)
+                ->appends($request->all());
+        }
+
+        return view('farmasi.opname.index', compact('data', 'tanggal', 'kd_bangsal', 'depots'));
+    }
+
+    public function opnameExportExcel(Request $request)
+    {
+        $tanggal = $request->tanggal;
+        $kd_bangsal = $request->kd_bangsal;
+
+        $data = $this->farmasiRepository->getOpnameQuery($tanggal, $kd_bangsal)->get();
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\OpnameExport($data), "stock-opname-farmasi-$tanggal.xlsx");
+    }
+
+    public function opnameExportPdf(Request $request)
+    {
+        $tanggal = $request->tanggal;
+        $kd_bangsal = $request->kd_bangsal;
+
+        $data = $this->farmasiRepository->getOpnameQuery($tanggal, $kd_bangsal)->get();
+        
+        $nm_bangsal = 'Semua Depo';
+        if ($kd_bangsal) {
+            $bangsal = DB::table('bangsal')->where('kd_bangsal', $kd_bangsal)->first();
+            if ($bangsal) {
+                $nm_bangsal = $bangsal->nm_bangsal;
+            }
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.opname.pdf', compact('data', 'tanggal', 'nm_bangsal'));
+        return $pdf->download("stock-opname-farmasi-$tanggal.pdf");
     }
 }

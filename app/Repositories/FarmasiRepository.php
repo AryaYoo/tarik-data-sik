@@ -327,4 +327,40 @@ class FarmasiRepository
             ])
             ->orderBy('databarang.nama_brng', 'asc');
     }
+
+    public function getOpnameQuery($date, $kdBangsal = null)
+    {
+        $query = DB::table('opname')
+            ->join('databarang', 'opname.kode_brng', '=', 'databarang.kode_brng')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->join('bangsal', 'opname.kd_bangsal', '=', 'bangsal.kd_bangsal')
+            ->where('opname.tanggal', $date)
+            ->select([
+                'databarang.kode_brng',
+                'databarang.nama_brng',
+                'kodesatuan.satuan',
+                'opname.stok as stok_sistem',
+                'opname.real as stok_fisik',
+                'opname.selisih',
+                'opname.h_beli',
+                'opname.keterangan',
+                'bangsal.nm_bangsal'
+            ]);
+
+        if ($kdBangsal) {
+            $query->where('opname.kd_bangsal', $kdBangsal);
+        }
+
+        return $query->orderBy('databarang.nama_brng', 'asc');
+    }
+
+    public function getOpnameDepots()
+    {
+        return DB::table('opname')
+            ->join('bangsal', 'opname.kd_bangsal', '=', 'bangsal.kd_bangsal')
+            ->select('bangsal.kd_bangsal', 'bangsal.nm_bangsal')
+            ->distinct()
+            ->orderBy('bangsal.nm_bangsal', 'asc')
+            ->get();
+    }
 }

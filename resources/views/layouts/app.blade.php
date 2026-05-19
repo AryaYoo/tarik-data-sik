@@ -110,7 +110,7 @@
                         </div>
 
                         <!-- Farmasi Menu -->
-                        <div x-data="{ open: {{ request()->routeIs('extraction.*') || request()->routeIs('extraction_ralan.*') || request()->routeIs('pemberian_obat.*') || request()->routeIs('penerimaan_obat_farmasi.*') || request()->routeIs('farmasi.waktu_tunggu_ralan.*') || request()->routeIs('farmasi.harga_barang.*') || request()->routeIs('farmasi.sirkulasi.*') || request()->routeIs('farmasi.waktu_tunggu_bpjs.*') ? 'true' : 'false' }} }"
+                        <div x-data="{ open: {{ request()->routeIs('extraction.*') || request()->routeIs('extraction_ralan.*') || request()->routeIs('pemberian_obat.*') || request()->routeIs('penerimaan_obat_farmasi.*') || request()->routeIs('farmasi.waktu_tunggu_ralan.*') || request()->routeIs('farmasi.harga_barang.*') || request()->routeIs('farmasi.sirkulasi.*') || request()->routeIs('farmasi.waktu_tunggu_bpjs.*') || request()->routeIs('farmasi.opname.*') ? 'true' : 'false' }} }"
                             class="space-y-1">
                             <button @click="open = !open"
                                 class="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl hover:bg-white/10 transition text-left">
@@ -162,6 +162,10 @@
                                 <a href="{{ route('farmasi.sirkulasi.index') }}"
                                     class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('farmasi.sirkulasi.*') ? 'text-white font-bold bg-white/20' : '' }}">
                                     Perputaran Obat
+                                </a>
+                                <a href="{{ route('farmasi.opname.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('farmasi.opname.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Opname
                                 </a>
                             </div>
                         </div>

@@ -76,6 +76,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/sirkulasi-obat/export/excel', [FarmasiController::class, 'sirkulasiExportExcel'])->name('farmasi.sirkulasi.export.excel');
     Route::get('/sirkulasi-obat/export/pdf', [FarmasiController::class, 'sirkulasiExportPdf'])->name('farmasi.sirkulasi.export.pdf');
 
+    // Stock Opname Farmasi
+    Route::get('/opname', [FarmasiController::class, 'opnameIndex'])->name('farmasi.opname.index');
+    Route::get('/opname/export/excel', [FarmasiController::class, 'opnameExportExcel'])->name('farmasi.opname.export.excel');
+    Route::get('/opname/export/pdf', [FarmasiController::class, 'opnameExportPdf'])->name('farmasi.opname.export.pdf');
+
     // Laboratorium
     Route::get('/laboratorium-ralan', [LaboratoriumController::class, 'index'])->name('laboratorium.index');
     Route::get('/laboratorium-ranap', [LaboratoriumController::class, 'index_ranap'])->name('laboratorium.index_ranap');
