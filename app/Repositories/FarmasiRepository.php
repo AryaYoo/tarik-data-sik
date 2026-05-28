@@ -270,20 +270,16 @@ class FarmasiRepository
 
     public function getSirkulasiObatQuery($startDate, $endDate)
     {
-        // Shift procurement date range forward by 1 month (e.g. January filter pulls February procurement)
-        $carbonStart = \Carbon\Carbon::parse($startDate);
-        $carbonEnd = \Carbon\Carbon::parse($endDate);
-
-        if ($carbonStart->copy()->startOfMonth()->toDateString() === $startDate && 
-            $carbonEnd->copy()->endOfMonth()->toDateString() === $endDate) {
-            // Full month filter: shift to next full month
-            $procStartDate = $carbonStart->copy()->addMonthNoOverflow()->startOfMonth()->toDateString();
-            $procEndDate = $carbonEnd->copy()->addMonthNoOverflow()->endOfMonth()->toDateString();
-        } else {
-            // Custom range filter: shift by exactly 1 month
-            $procStartDate = $carbonStart->copy()->addMonthNoOverflow()->toDateString();
-            $procEndDate = $carbonEnd->copy()->addMonthNoOverflow()->toDateString();
-        }
+        // Sumber data: tabel riwayat_barang_medis (buku besar mutasi stok SIMRS Khanza).
+        // Kolom masuk/keluar di SIMRS Khanza TIDAK selalu menyimpan delta kuantitas murni
+        // (kadang berisi nilai absolut, misal saat stok opname), sehingga SUM(masuk)/SUM(keluar)
+        // tidak akurat untuk perhitungan sirkulasi.
+        //
+        // SOLUSI: Hitung pergerakan nyata per-baris dari selisih stok_akhir vs stok_awal:
+        //   Penerimaan = SUM(GREATEST(stok_akhir - stok_awal, 0))  → total kenaikan stok per transaksi
+        //   Pemberian  = SUM(GREATEST(stok_awal - stok_akhir, 0))  → total penurunan stok per transaksi
+        //
+        // DIJAMIN BALANCE: Stok Awal + Penerimaan - Pemberian = Stok Akhir (sesuai logika farmasi).
 
         return DB::table('databarang')
             ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
@@ -318,12 +314,19 @@ class FarmasiRepository
                     LIMIT 1
                 ) as stok_akhir"),
                 DB::raw("(
-                    SELECT COALESCE(SUM(dp.jumlah), 0)
-                    FROM detailpesan dp
-                    JOIN pemesanan p ON dp.no_faktur = p.no_faktur
-                    WHERE dp.kode_brng = databarang.kode_brng
-                      AND p.tgl_pesan BETWEEN '$procStartDate' AND '$procEndDate'
-                ) as jumlah_pengadaan")
+                    SELECT COALESCE(SUM(GREATEST(r.stok_akhir - r.stok_awal, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                ) as penerimaan"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                ) as distribusi")
             ])
             ->orderBy('databarang.nama_brng', 'asc');
     }
