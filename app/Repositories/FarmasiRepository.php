@@ -366,4 +366,61 @@ class FarmasiRepository
             ->orderBy('bangsal.nm_bangsal', 'asc')
             ->get();
     }
+
+    public function getTemplateBuSugatiQuery($startDate, $endDate)
+    {
+        return DB::table('databarang')
+            ->leftJoin('kodesatuan', 'databarang.kode_sat', '=', 'kodesatuan.kode_sat')
+            ->where(function($query) use ($startDate, $endDate) {
+                $query->whereExists(function ($q) use ($startDate, $endDate) {
+                    $q->select(DB::raw(1))
+                        ->from('riwayat_barang_medis')
+                        ->whereColumn('riwayat_barang_medis.kode_brng', 'databarang.kode_brng')
+                        ->where('riwayat_barang_medis.status', 'Simpan')
+                        ->whereBetween('riwayat_barang_medis.tanggal', [$startDate, $endDate]);
+                })
+                ->orWhereExists(function ($q) use ($startDate, $endDate) {
+                    $q->select(DB::raw(1))
+                        ->from('detailpesan')
+                        ->join('pemesanan', 'detailpesan.no_faktur', '=', 'pemesanan.no_faktur')
+                        ->whereColumn('detailpesan.kode_brng', 'databarang.kode_brng')
+                        ->whereBetween('pemesanan.tgl_pesan', [$startDate, $endDate]);
+                })
+                ->orWhereExists(function ($q) use ($startDate, $endDate) {
+                    $q->select(DB::raw(1))
+                        ->from('detail_pemberian_obat')
+                        ->whereColumn('detail_pemberian_obat.kode_brng', 'databarang.kode_brng')
+                        ->whereBetween('detail_pemberian_obat.tgl_perawatan', [$startDate, $endDate]);
+                });
+            })
+            ->select([
+                'databarang.kode_brng',
+                'databarang.nama_brng',
+                'kodesatuan.satuan',
+                'databarang.h_beli as harga_beli',
+                DB::raw("(
+                    SELECT r1.stok_awal 
+                    FROM riwayat_barang_medis r1 
+                    WHERE r1.kode_brng = databarang.kode_brng 
+                      AND r1.tanggal BETWEEN '$startDate' AND '$endDate' 
+                      AND r1.status = 'Simpan' 
+                    ORDER BY r1.tanggal ASC, r1.jam ASC 
+                    LIMIT 1
+                ) as stok_awal"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(detailpesan.jumlah), 0)
+                    FROM detailpesan
+                    JOIN pemesanan ON detailpesan.no_faktur = pemesanan.no_faktur
+                    WHERE detailpesan.kode_brng = databarang.kode_brng
+                      AND pemesanan.tgl_pesan BETWEEN '$startDate' AND '$endDate'
+                ) as penerimaan"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(detail_pemberian_obat.jml), 0)
+                    FROM detail_pemberian_obat
+                    WHERE detail_pemberian_obat.kode_brng = databarang.kode_brng
+                      AND detail_pemberian_obat.tgl_perawatan BETWEEN '$startDate' AND '$endDate'
+                ) as pemberian")
+            ])
+            ->orderBy('databarang.nama_brng', 'asc');
+    }
 }

@@ -208,4 +208,46 @@ class FarmasiController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.opname.pdf', compact('data', 'tanggal', 'nm_bangsal'));
         return $pdf->download("stock-opname-farmasi-$tanggal.pdf");
     }
+
+    public function templateBuSugatiIndex(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+
+        $data = null;
+        if ($request->has('tgl_mulai')) {
+            // Log the extraction
+            ExtractionLog::create([
+                'username' => Auth::user()->username ?? Auth::user()->name,
+                'filter_date' => $tgl_mulai,
+                'extraction_type' => 'Template Bu Sugati',
+            ]);
+
+            $data = $this->farmasiRepository->getTemplateBuSugatiQuery($tgl_mulai, $tgl_selesai)
+                ->paginate(20)
+                ->appends($request->all());
+        }
+
+        return view('farmasi.template_bu_sugati.index', compact('data', 'tgl_mulai', 'tgl_selesai'));
+    }
+
+    public function templateBuSugatiExportExcel(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+
+        $data = $this->farmasiRepository->getTemplateBuSugatiQuery($tgl_mulai, $tgl_selesai)->get();
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\TemplateBuSugatiExport($data, $tgl_mulai, $tgl_selesai), "template-bu-sugati-$tgl_mulai-$tgl_selesai.xlsx");
+    }
+
+    public function templateBuSugatiExportPdf(Request $request)
+    {
+        $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+
+        $data = $this->farmasiRepository->getTemplateBuSugatiQuery($tgl_mulai, $tgl_selesai)->get();
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.template_bu_sugati.pdf', compact('data', 'tgl_mulai', 'tgl_selesai'));
+        return $pdf->download("template-bu-sugati-$tgl_mulai-$tgl_selesai.pdf");
+    }
 }

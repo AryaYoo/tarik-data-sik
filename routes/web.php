@@ -81,6 +81,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/opname/export/excel', [FarmasiController::class, 'opnameExportExcel'])->name('farmasi.opname.export.excel');
     Route::get('/opname/export/pdf', [FarmasiController::class, 'opnameExportPdf'])->name('farmasi.opname.export.pdf');
 
+    // Template Bu Sugati
+    Route::get('/template-bu-sugati', [FarmasiController::class, 'templateBuSugatiIndex'])->name('farmasi.template_bu_sugati.index');
+    Route::get('/template-bu-sugati/export/excel', [FarmasiController::class, 'templateBuSugatiExportExcel'])->name('farmasi.template_bu_sugati.export.excel');
+    Route::get('/template-bu-sugati/export/pdf', [FarmasiController::class, 'templateBuSugatiExportPdf'])->name('farmasi.template_bu_sugati.export.pdf');
+
     // Laboratorium
     Route::get('/laboratorium-ralan', [LaboratoriumController::class, 'index'])->name('laboratorium.index');
     Route::get('/laboratorium-ranap', [LaboratoriumController::class, 'index_ranap'])->name('laboratorium.index_ranap');
