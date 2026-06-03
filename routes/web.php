@@ -22,6 +22,7 @@ use App\Http\Controllers\PenerimaanObatFarmasiController;
 use App\Http\Controllers\LaboratoriumController;
 use App\Http\Controllers\FarmasiController;
 use App\Http\Controllers\HargaBarangController;
+use App\Http\Controllers\RawatJalanController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -45,6 +46,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/extraction-ralan/tarik', [ExtractionRalanController::class, 'tarik'])->name('extraction_ralan.tarik');
     Route::get('/extraction-ralan/export/excel', [ExtractionRalanController::class, 'exportExcel'])->name('extraction_ralan.export.excel');
     Route::get('/extraction-ralan/export/pdf', [ExtractionRalanController::class, 'exportPdf'])->name('extraction_ralan.export.pdf');
+
+    // Rawat Jalan
+    Route::get('/rawat-jalan/alamat-dan-kontak', [RawatJalanController::class, 'alamatDanKontak'])->name('rawat_jalan.alamat_dan_kontak.index');
+    Route::get('/rawat-jalan/alamat-dan-kontak/export/excel', [RawatJalanController::class, 'alamatDanKontakExportExcel'])->name('rawat_jalan.alamat_dan_kontak.export.excel');
+    Route::get('/rawat-jalan/alamat-dan-kontak/export/pdf', [RawatJalanController::class, 'alamatDanKontakExportPdf'])->name('rawat_jalan.alamat_dan_kontak.export.pdf');
 
     // Pemberian Obat dan BHP
     Route::get('/pemberian-obat', [PemberianObatController::class, 'index'])->name('pemberian_obat.index');
