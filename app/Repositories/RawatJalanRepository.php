@@ -33,7 +33,7 @@ class RawatJalanRepository
                 'pasien.alamat',
                 'pasien.no_tlp'
             ])
-            ->orderBy('reg_periksa.tgl_registrasi', 'desc')
-            ->orderBy('reg_periksa.jam_reg', 'desc');
+            ->distinct()
+            ->orderBy('pasien.nm_pasien', 'asc');
     }
 }
