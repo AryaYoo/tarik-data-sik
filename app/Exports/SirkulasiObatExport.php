@@ -32,8 +32,24 @@ class SirkulasiObatExport implements FromCollection, WithHeadings, WithMapping, 
             'Satuan',
             'Harga Barang',
             'Stok Awal',
-            'Penerimaan',
-            'Pemberian',
+            'Total Masuk',
+            'Penerimaan Supplier',
+            'Retur Pasien',
+            'Mutasi Masuk',
+            'Opname Lebih',
+            'Lain-lain (Masuk)',
+            'Resep Dokter',
+            'Total Keluar',
+            'Pemberian Obat',
+            'Resep Pulang',
+            'Detail Jual',
+            'Stok Keluar',
+            'Mutasi Keluar',
+            'Hibah',
+            'Retur Supplier',
+            'Opname Kurang',
+            'Pengambilan Medis',
+            'Lain-lain (Keluar)',
             'Stok Akhir',
         ];
     }
@@ -47,43 +63,48 @@ class SirkulasiObatExport implements FromCollection, WithHeadings, WithMapping, 
             $row->harga_beli,
             $row->stok_awal,
             $row->penerimaan,
+            $row->pengadaan,
+            $row->retur_pasien,
+            $row->mutasi_masuk,
+            $row->opname_lebih,
+            $row->lain_lain_masuk,
+            $row->resep_dokter,
             $row->distribusi,
+            $row->pemberian_obat,
+            $row->resep_pulang,
+            $row->detail_jual,
+            $row->stok_keluar,
+            $row->mutasi_keluar,
+            $row->hibah,
+            $row->retur_supplier,
+            $row->opname_kurang,
+            $row->pengambilan_medis,
+            $row->lain_lain_keluar,
             $row->stok_akhir,
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        // Style Header
-        $sheet->getStyle('A1:H1')->applyFromArray([
+        $sheet->getStyle('A1:X1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '007C3C']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
-        // Auto-fit columns
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'X') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // Format Qty and Price Columns
         $rowCount = count($this->data);
         if ($rowCount > 0) {
             $lastRow = $rowCount + 1;
-            
-            // Format numbers
             $sheet->getStyle("D2:D$lastRow")->getNumberFormat()->setFormatCode('"Rp" #,##0');
-            $sheet->getStyle("E2:E$lastRow")->getNumberFormat()->setFormatCode('#,##0');
-            $sheet->getStyle("F2:F$lastRow")->getNumberFormat()->setFormatCode('#,##0');
-            $sheet->getStyle("G2:G$lastRow")->getNumberFormat()->setFormatCode('#,##0');
-            $sheet->getStyle("H2:H$lastRow")->getNumberFormat()->setFormatCode('#,##0');
-
-            // Alignments
+            $sheet->getStyle("E2:X$lastRow")->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle("A2:A$lastRow")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             $sheet->getStyle("B2:B$lastRow")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             $sheet->getStyle("C2:C$lastRow")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle("D2:D$lastRow")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-            $sheet->getStyle("E2:H$lastRow")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle("D2:X$lastRow")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
         }
 
         return [];

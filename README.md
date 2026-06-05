@@ -63,6 +63,10 @@ Struktur folder `resources/views` harus disusun berdasarkan unit kerja secara hi
     - **Formula Kalkulasi (Jika Ada)**: Sertakan formula matematika dasar serta contoh penulisan formula Excel (seperti `=AVERAGE(...)` atau `=F2-E2`) yang ramah pengguna. *Jika halaman tidak memiliki kalkulasi matematis/formula Excel, bagian ini tidak perlu dipaksakan.*
     - **Pemetaan Basis Data (SIMRS Khanza)**: Cantumkan tabel transparan yang memetakan kolom tampilan UI ke nama tabel SQL, nama kolom SQL, serta keterangan filter kueri yang digunakan. Ini sangat penting untuk memfasilitasi audit trail dan transparansi data.
 
+### 8. Transparansi dan Integritas Data
+- **Data Real Tanpa Manipulasi**: Segala bentuk penarikan data, perhitungan (kalkulasi), maupun pelaporan **WAJIB** menampilkan angka yang *real*, transparan, dan tidak boleh dimanipulasi (di-hardcode, disembunyikan secara tidak wajar, atau dipalsukan) untuk tujuan apapun. 
+- **Single Source of Truth**: Pastikan perhitungan total atau agregat merujuk pada buku besar (seperti `riwayat_barang_medis`) agar konsistensi matematis data dapat dipertanggungjawabkan kebenarannya pada saat audit.
+
 ## Teknologi yang Digunakan
 - **Framework**: [Laravel 10](https://laravel.com)
 - **Frontend Logic**: [Alpine.js](https://alpinejs.dev)

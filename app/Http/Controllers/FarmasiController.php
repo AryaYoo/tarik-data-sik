@@ -152,7 +152,8 @@ class FarmasiController extends Controller
 
         $data = $this->farmasiRepository->getSirkulasiObatQuery($tgl_mulai, $tgl_selesai)->get();
         
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.sirkulasi.pdf', compact('data', 'tgl_mulai', 'tgl_selesai'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.sirkulasi.pdf', compact('data', 'tgl_mulai', 'tgl_selesai'))
+                ->setPaper('a4', 'landscape');
         return $pdf->download("perputaran-obat-$tgl_mulai-$tgl_selesai.pdf");
      }
 

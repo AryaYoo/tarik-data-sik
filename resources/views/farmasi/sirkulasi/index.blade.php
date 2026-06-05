@@ -72,29 +72,52 @@
              </div>
              
              <!-- Table Section -->
-             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                 <div class="overflow-x-auto">
+             <div x-data="{ showDetail: false }" class="space-y-3">
+                 <div class="flex justify-end pr-2">
+                     <label class="flex items-center cursor-pointer gap-2 select-none hover:opacity-80 transition-opacity">
+                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tampilkan Rincian Sub-Transaksi</span>
+                         <div class="relative">
+                             <input type="checkbox" x-model="showDetail" class="sr-only">
+                             <div class="block bg-gray-200 w-10 h-6 rounded-full transition-colors duration-300" :class="{'bg-primary': showDetail}"></div>
+                             <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm" :class="{'transform translate-x-4': showDetail}"></div>
+                         </div>
+                     </label>
+                 </div>
+                 <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                     <div class="overflow-x-auto">
                      <table class="w-full text-left">
                          <thead>
                              <tr class="bg-gray-50/50 border-b border-gray-100">
-                                 <!-- <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">No</th> -->
                                  <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest" title="Kode unik barang medis (SIMRS Khanza)">Kode Barang</th>
                                  <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest" title="Nama lengkap barang medis/obat">Nama Barang</th>
                                  <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center" title="Satuan kemasan terkecil">Satuan</th>
                                  <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Harga beli terupdate dari master data obat">Harga Barang</th>
-                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Stok awal barang: saldo sebelum transaksi PERTAMA dalam periode ini (dari riwayat_barang_medis)">Stok Awal</th>
-                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Total kenaikan stok per transaksi — dihitung dari SUM(GREATEST(stok_akhir - stok_awal, 0)) pada tabel riwayat_barang_medis. Mencakup semua jenis masuk: faktur, mutasi, opname naik, retur pasien, dll.">Penerimaan</th>
-                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Total penurunan stok per transaksi — dihitung dari SUM(GREATEST(stok_awal - stok_akhir, 0)) pada tabel riwayat_barang_medis. Mencakup semua jenis keluar: resep pasien, mutasi, retur suplier, opname turun, dll.">Pemberian</th>
-                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Saldo stok setelah transaksi TERAKHIR dalam periode — diambil dari kolom stok_akhir baris terakhir (ORDER BY tanggal DESC, jam DESC LIMIT 1) pada tabel riwayat_barang_medis.">Stok Akhir</th>
-                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center" title="Status balance: Stok Awal + Penerimaan - Pemberian = Stok Akhir? Jika tidak balance, selisih bisa terjadi karena ada perubahan stok di SIMRS yang tidak tercatat lengkap di buku besar.">Keterangan</th>
+                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Stok awal periode (riwayat_barang_medis)">Stok Awal</th>
+                                 <th class="px-6 py-5 text-xs font-black text-green-500 uppercase tracking-widest text-right bg-green-50/30" title="Total seluruh mutasi masuk (riwayat_barang_medis)">Total Masuk</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-green-400 uppercase tracking-widest text-right bg-green-50/20" title="Penerimaan supplier (riwayat_barang_medis: posisi 'Penerimaan'/'Pengadaan')">Penerimaan Supplier</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-green-400 uppercase tracking-widest text-right bg-green-50/20" title="Obat diretur pasien (riwayat_barang_medis: posisi 'Retur Pasien')">Retur Pasien</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-green-400 uppercase tracking-widest text-right bg-green-50/20" title="Kiriman dari depo lain (riwayat_barang_medis: posisi 'Mutasi')">Mutasi Masuk</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-green-400 uppercase tracking-widest text-right bg-green-50/20" title="Selisih lebih stock opname (riwayat_barang_medis: posisi 'Opname')">Opname Lebih</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-green-400 uppercase tracking-widest text-right bg-green-50/20" title="Sumber masuk lainnya (riwayat_barang_medis: posisi selain yg didefinisikan)">Lain-lain (Masuk)</th>
+                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Draft resep dari dokter — belum tentu diserahkan (resep_dokter.jml)">Resep Dokter</th>
+                                 <th class="px-6 py-5 text-xs font-black text-red-500 uppercase tracking-widest text-right bg-red-50/30" title="Total seluruh mutasi keluar (riwayat_barang_medis)">Total Keluar</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Obat diberikan ke pasien (riwayat_barang_medis: posisi 'Pemberian Obat')">Pemberian Obat</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Obat dibawa KRS (riwayat_barang_medis: posisi 'Resep Pulang')">Resep Pulang</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Penjualan bebas (riwayat_barang_medis: posisi 'Penjualan')">Detail Jual</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Pengeluaran internal BHP (riwayat_barang_medis: posisi 'Stok Keluar')">Stok Keluar</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Stok dikirim ke depo lain (riwayat_barang_medis: posisi 'Mutasi')">Mutasi Keluar</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Dihibahkan (riwayat_barang_medis: posisi 'Hibah')">Hibah</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Dikembalikan ke supplier (riwayat_barang_medis: posisi 'Retur Beli')">Retur Supplier</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Selisih kurang stock opname (riwayat_barang_medis: posisi 'Opname')">Opname Kurang</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Pengambilan medis (riwayat_barang_medis: posisi 'Pengambilan Medis')">Pengambilan Medis</th>
+                                 <th x-cloak x-show="showDetail" class="px-6 py-5 text-xs font-black text-red-400 uppercase tracking-widest text-right bg-red-50/20" title="Sumber keluar lainnya (riwayat_barang_medis: posisi selain yg didefinisikan)">Lain-lain (Keluar)</th>
+                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-right" title="Stok akhir periode (riwayat_barang_medis)">Stok Akhir</th>
+                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center" title="Validasi: Stok Awal + Total Masuk - Total Keluar = Stok Akhir">Keterangan</th>
                              </tr>
                          </thead>
                         <tbody class="divide-y divide-gray-50">
                             @forelse($data as $index => $item)
                                 <tr class="hover:bg-gray-50/30 transition-colors">
-                                    <!-- <td class="px-6 py-5 text-sm font-bold text-gray-300">
-                                        {{ str_pad($data->firstItem() + $index, 2, '0', STR_PAD_LEFT) }}
-                                    </td> -->
                                     <td class="px-6 py-5">
                                         <span class="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black bg-gray-100 text-gray-500 tracking-tighter">
                                             {{ $item->kode_brng }}
@@ -114,11 +137,59 @@
                                     <td class="px-6 py-5 text-right font-semibold text-gray-700">
                                         {{ number_format($item->stok_awal, 0, ',', '.') }}
                                     </td>
-                                    <td class="px-6 py-5 text-right font-semibold text-green-600">
+                                    <td class="px-6 py-5 text-right font-semibold text-green-600 bg-green-50/30">
                                         {{ number_format($item->penerimaan, 0, ',', '.') }}
                                     </td>
-                                    <td class="px-6 py-5 text-right font-semibold text-red-600">
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-green-500 bg-green-50/20">
+                                        {{ number_format($item->pengadaan, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-green-500 bg-green-50/20">
+                                        {{ number_format($item->retur_pasien, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-green-500 bg-green-50/20">
+                                        {{ number_format($item->mutasi_masuk, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-green-500 bg-green-50/20">
+                                        {{ number_format($item->opname_lebih, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-green-500 bg-green-50/20">
+                                        {{ number_format($item->lain_lain_masuk, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-5 text-right font-semibold text-gray-700">
+                                        {{ number_format($item->resep_dokter, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-5 text-right font-semibold text-red-600 bg-red-50/30">
                                         {{ number_format($item->distribusi, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->pemberian_obat, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->resep_pulang, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->detail_jual, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->stok_keluar, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->mutasi_keluar, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->hibah, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->retur_supplier, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->opname_kurang, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->pengambilan_medis, 0, ',', '.') }}
+                                    </td>
+                                    <td x-cloak x-show="showDetail" class="px-6 py-5 text-right text-red-500 bg-red-50/20">
+                                        {{ number_format($item->lain_lain_keluar, 0, ',', '.') }}
                                     </td>
                                     <td class="px-6 py-5 text-right font-semibold text-gray-700">
                                         {{ number_format($item->stok_akhir, 0, ',', '.') }}
@@ -134,17 +205,16 @@
                                                 Balance
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 tracking-tight uppercase" title="Seharusnya: {{ number_format($expectedStokAkhir, 0, ',', '.') }} | Selisih: {{ number_format($item->stok_akhir - $expectedStokAkhir, 0, ',', '.') }} — kemungkinan ada perubahan stok di SIMRS yang tidak tercatat lengkap (misal: koreksi manual atau stok opname)">
+                                            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 tracking-tight uppercase" title="Seharusnya: {{ number_format($expectedStokAkhir, 0, ',', '.') }} | Selisih: {{ number_format($item->stok_akhir - $expectedStokAkhir, 0, ',', '.') }}">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                 Selisih {{ number_format(abs($item->stok_akhir - $expectedStokAkhir), 0, ',', '.') }}
                                             </span>
                                         @endif
                                     </td>
-
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-6 py-20 text-center text-gray-400 italic">Data tidak ditemukan.</td>
+                                    <td :colspan="showDetail ? 25 : 11" class="px-6 py-20 text-center text-gray-400 italic">Data tidak ditemukan.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -231,6 +301,20 @@
                                 </div>
                             </li>
                             <li>
+                                <strong>Resep Dokter:</strong> Total kuantitas obat yang diresepkan oleh dokter untuk pasien rawat jalan/inap.
+                                <div class="mt-1.5 bg-gray-50 p-2.5 rounded-xl border border-gray-100 font-mono text-[10px] text-gray-700 shadow-inner">
+                                    <strong class="text-primary text-[11px]">Formula:</strong> <code class="text-red-600 font-bold">SUM(resep_dokter.jml)</code><br>
+                                    <strong class="text-primary text-[11px]">Sumber Data:</strong> Tabel <code class="text-red-600 font-bold">resep_dokter</code> yang direferensikan ke tanggal perawatan di <code class="text-red-600 font-bold">resep_obat</code>.
+                                </div>
+                            </li>
+                            <li>
+                                <strong>Detail Jual:</strong> Total kuantitas obat yang terjual secara bebas/retail kepada pelanggan umum.
+                                <div class="mt-1.5 bg-gray-50 p-2.5 rounded-xl border border-gray-100 font-mono text-[10px] text-gray-700 shadow-inner">
+                                    <strong class="text-primary text-[11px]">Formula:</strong> <code class="text-red-600 font-bold">SUM(detailjual.jumlah)</code><br>
+                                    <strong class="text-primary text-[11px]">Sumber Data:</strong> Tabel <code class="text-red-600 font-bold">detailjual</code> yang direferensikan ke tanggal penjualan di <code class="text-red-600 font-bold">penjualan</code>.
+                                </div>
+                            </li>
+                            <li>
                                 <strong>Pemberian:</strong> Total penurunan stok (barang keluar) selama periode &mdash; mencakup semua jenis transaksi yang mengurangi stok (resep pasien, mutasi keluar, retur suplier, opname turun, dll).
                                 <div class="mt-1.5 bg-gray-50 p-2.5 rounded-xl border border-gray-100 font-mono text-[10px] text-gray-700 shadow-inner">
                                     <strong class="text-primary text-[11px]">Formula:</strong> <code class="text-red-600 font-bold">SUM(GREATEST(stok_awal - stok_akhir, 0))</code> per baris transaksi<br>
@@ -240,7 +324,7 @@
                             <li>
                                 <strong>Stok Akhir:</strong> Saldo stok setelah transaksi TERAKHIR dalam periode (dari kolom stok_akhir baris terakhir).
                                 <div class="mt-1.5 bg-green-50 p-2.5 rounded-xl border border-green-200 font-mono text-[10px] text-gray-700 shadow-inner">
-                                    <strong class="text-green-700 text-[11px]">&#x2705; DIJAMIN BALANCE:</strong> <code class="text-red-600 font-bold">=E2+F2-G2</code> (Stok Awal + Penerimaan - Pemberian = Stok Akhir)<br>
+                                    <strong class="text-green-700 text-[11px]">&#x2705; DIJAMIN BALANCE:</strong> <code class="text-red-600 font-bold">=E2+F2-I2</code> (Stok Awal + Penerimaan - Pemberian = Stok Akhir)<br>
                                     <strong class="text-green-700 text-[11px]">Logika Farmasi:</strong> Stok Akhir = Stok Awal + Penerimaan - Pemberian &mdash; formula ini selalu tepat karena penerimaan dan pemberian dihitung dari pergerakan nyata per transaksi.
                                 </div>
                             </li>
@@ -297,6 +381,18 @@
                                         <td class="p-2 text-gray-600">Total kenaikan stok per transaksi. Dihitung dari selisih stok, bukan kolom masuk. Filter: status = &lsquo;Simpan&rsquo;.</td>
                                     </tr>
                                     <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Resep Dokter</td>
+                                        <td class="p-2 font-mono text-primary">resep_dokter, resep_obat</td>
+                                        <td class="p-2 font-mono text-primary">SUM(jml)</td>
+                                        <td class="p-2 text-gray-600">Total obat diresepkan dokter. Di-join ke resep_obat.tgl_perawatan.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Detail Jual</td>
+                                        <td class="p-2 font-mono text-primary">detailjual, penjualan</td>
+                                        <td class="p-2 font-mono text-primary">SUM(jumlah)</td>
+                                        <td class="p-2 text-gray-600">Total penjualan bebas apotek. Di-join ke penjualan.tgl_jual.</td>
+                                    </tr>
+                                    <tr>
                                         <td class="p-2 font-semibold text-gray-700">Pemberian</td>
                                         <td class="p-2 font-mono text-primary">riwayat_barang_medis</td>
                                         <td class="p-2 font-mono text-primary">SUM(GREATEST(stok_awal - stok_akhir, 0))</td>
@@ -311,6 +407,134 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        {{-- Sub-section: Sumber Penerimaan --}}
+                        <h5 class="text-xs font-black text-green-700 uppercase tracking-wider mt-4 mb-1 border-b border-green-100 pb-1">&#x2B06; Rincian Sumber PENERIMAAN (Obat Masuk) di riwayat_barang_medis</h5>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-gray-100">
+                                <thead>
+                                    <tr class="bg-green-50 border-b border-green-100">
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Tipe Transaksi</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Tabel Sumber</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom Qty</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom Tanggal Filter</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50 text-[10px]">
+                                    <tr>
+                                        <td class="p-2 font-semibold text-green-700">Pengadaan / Penerimaan</td>
+                                        <td class="p-2 font-mono text-primary">detailpembelian, nota_beli</td>
+                                        <td class="p-2 font-mono">jml</td>
+                                        <td class="p-2 font-mono">nota_beli.tgl_beli</td>
+                                        <td class="p-2 text-gray-600">Penerimaan obat/BHP dari supplier/distributor berdasarkan faktur pembelian.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-green-700">Mutasi Masuk</td>
+                                        <td class="p-2 font-mono text-primary">mutasibarang</td>
+                                        <td class="p-2 font-mono">jml</td>
+                                        <td class="p-2 font-mono">tanggal</td>
+                                        <td class="p-2 text-gray-600">Penerimaan stok dari depo/gudang lain (kd_bangsalke). Stok bertambah di depo penerima.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-green-700">Retur Jual</td>
+                                        <td class="p-2 font-mono text-primary">detreturjual, returjual</td>
+                                        <td class="p-2 font-mono">jml_retur</td>
+                                        <td class="p-2 font-mono">returjual.tgl_retur</td>
+                                        <td class="p-2 text-gray-600">Obat dikembalikan oleh pelanggan retail ke apotek. Stok kembali masuk.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-green-700">Retur Pasien</td>
+                                        <td class="p-2 font-mono text-primary">returpasien</td>
+                                        <td class="p-2 font-mono">jml</td>
+                                        <td class="p-2 font-mono">tanggal</td>
+                                        <td class="p-2 text-gray-600">Obat dikembalikan oleh pasien rawat jalan/inap ke farmasi (misal: sisa obat, obat tidak jadi ditebus).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-green-700">Opname Lebih</td>
+                                        <td class="p-2 font-mono text-primary">opname</td>
+                                        <td class="p-2 font-mono">lebih</td>
+                                        <td class="p-2 font-mono">tanggal</td>
+                                        <td class="p-2 text-gray-600">Selisih positif saat stock opname fisik (stok fisik lebih banyak dari stok sistem).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Sub-section: Sumber Pemberian --}}
+                        <h5 class="text-xs font-black text-red-700 uppercase tracking-wider mt-4 mb-1 border-b border-red-100 pb-1">&#x2B07; Rincian Sumber PEMBERIAN (Obat Keluar) di riwayat_barang_medis</h5>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-gray-100">
+                                <thead>
+                                    <tr class="bg-red-50 border-b border-red-100">
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Tipe Transaksi</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Tabel Sumber</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom Qty</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom Tanggal Filter</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50 text-[10px]">
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Pemberian Obat Pasien</td>
+                                        <td class="p-2 font-mono text-primary">detail_pemberian_obat</td>
+                                        <td class="p-2 font-mono">jml</td>
+                                        <td class="p-2 font-mono">tgl_perawatan</td>
+                                        <td class="p-2 text-gray-600">Obat diserahkan ke pasien rawat jalan / rawat inap berdasarkan resep yang divalidasi apoteker.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Penjualan Bebas (Retail)</td>
+                                        <td class="p-2 font-mono text-primary">detailjual, penjualan</td>
+                                        <td class="p-2 font-mono">jumlah</td>
+                                        <td class="p-2 font-mono">penjualan.tgl_jual</td>
+                                        <td class="p-2 text-gray-600">Penjualan tunai langsung di kasir apotek kepada pembeli umum / non-pasien terdaftar.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Resep Pulang</td>
+                                        <td class="p-2 font-mono text-primary">resep_pulang</td>
+                                        <td class="p-2 font-mono">jml_barang</td>
+                                        <td class="p-2 font-mono">tanggal</td>
+                                        <td class="p-2 text-gray-600">Obat diberikan kepada pasien rawat inap untuk dibawa pulang saat keluar rumah sakit (KRS).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Pengeluaran Internal (Stok Keluar)</td>
+                                        <td class="p-2 font-mono text-primary">detail_pengeluaran_obat_bhp, pengeluaran_obat_bhp</td>
+                                        <td class="p-2 font-mono">jumlah</td>
+                                        <td class="p-2 font-mono">pengeluaran_obat_bhp.tanggal</td>
+                                        <td class="p-2 text-gray-600">Pengeluaran obat/BHP untuk penggunaan internal unit RS (misal: UGD, OK, poli) yang tidak ditagih per resep.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Mutasi Keluar</td>
+                                        <td class="p-2 font-mono text-primary">mutasibarang</td>
+                                        <td class="p-2 font-mono">jml</td>
+                                        <td class="p-2 font-mono">tanggal</td>
+                                        <td class="p-2 text-gray-600">Pengiriman stok ke depo/gudang lain (kd_bangsaldari). Stok berkurang di depo pengirim.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Hibah / Donasi</td>
+                                        <td class="p-2 font-mono text-primary">detailhibah_obat_bhp, hibah_obat_bhp</td>
+                                        <td class="p-2 font-mono">jumlah</td>
+                                        <td class="p-2 font-mono">hibah_obat_bhp.tanggal</td>
+                                        <td class="p-2 text-gray-600">Pemberian/hibah obat atau BHP ke pihak luar RS (misal: donasi sosial, bantuan bencana).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Retur ke Supplier</td>
+                                        <td class="p-2 font-mono text-primary">detreturbeli, returbeli</td>
+                                        <td class="p-2 font-mono">jml_retur</td>
+                                        <td class="p-2 font-mono">returbeli.tgl_retur</td>
+                                        <td class="p-2 text-gray-600">Pengembalian obat ke distributor/supplier (ED mendekati, rusak, atau salah kirim).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-red-700">Opname Kurang</td>
+                                        <td class="p-2 font-mono text-primary">opname</td>
+                                        <td class="p-2 font-mono">selisih (negatif)</td>
+                                        <td class="p-2 font-mono">tanggal</td>
+                                        <td class="p-2 text-gray-600">Selisih negatif saat stock opname fisik (stok fisik lebih sedikit dari stok sistem — stok dikoreksi turun).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-2 italic">&#9432; Semua transaksi di atas bermuara ke tabel <code class="font-mono text-primary">riwayat_barang_medis</code> dengan kolom <code class="font-mono text-primary">posisi</code> sebagai tipe transaksi dan kolom <code class="font-mono text-primary">status = 'Simpan'</code> sebagai filter keabsahan data.</p>
                     </div>
                 </div>
 

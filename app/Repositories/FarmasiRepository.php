@@ -321,12 +321,145 @@ class FarmasiRepository
                       AND r.status = 'Simpan'
                 ) as penerimaan"),
                 DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_akhir - r.stok_awal, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi IN ('Penerimaan', 'Pengadaan')
+                ) as pengadaan"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_akhir - r.stok_awal, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Retur Pasien'
+                ) as retur_pasien"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_akhir - r.stok_awal, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Mutasi'
+                ) as mutasi_masuk"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_akhir - r.stok_awal, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Opname'
+                ) as opname_lebih"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_akhir - r.stok_awal, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi NOT IN ('Penerimaan', 'Pengadaan', 'Retur Pasien', 'Mutasi', 'Opname')
+                ) as lain_lain_masuk"),
+
+                // Referensi Draft
+                DB::raw("(
+                    SELECT COALESCE(SUM(rd.jml), 0)
+                    FROM resep_dokter rd
+                    JOIN resep_obat ro ON rd.no_resep = ro.no_resep
+                    WHERE rd.kode_brng = databarang.kode_brng
+                      AND ro.tgl_perawatan BETWEEN '$startDate' AND '$endDate'
+                ) as resep_dokter"),
+
+                // Total Keluar
+                DB::raw("(
                     SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
                     FROM riwayat_barang_medis r
                     WHERE r.kode_brng = databarang.kode_brng
                       AND r.tanggal BETWEEN '$startDate' AND '$endDate'
                       AND r.status = 'Simpan'
-                ) as distribusi")
+                ) as distribusi"),
+
+                // Rincian Keluar (dari riwayat_barang_medis)
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Pemberian Obat'
+                ) as pemberian_obat"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Resep Pulang'
+                ) as resep_pulang"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Penjualan'
+                ) as detail_jual"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Stok Keluar'
+                ) as stok_keluar"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Mutasi'
+                ) as mutasi_keluar"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Hibah'
+                ) as hibah"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Retur Beli'
+                ) as retur_supplier"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Opname'
+                ) as opname_kurang"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi = 'Pengambilan Medis'
+                ) as pengambilan_medis"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(GREATEST(r.stok_awal - r.stok_akhir, 0)), 0)
+                    FROM riwayat_barang_medis r
+                    WHERE r.kode_brng = databarang.kode_brng
+                      AND r.tanggal BETWEEN '$startDate' AND '$endDate'
+                      AND r.status = 'Simpan'
+                      AND r.posisi NOT IN ('Pemberian Obat', 'Resep Pulang', 'Penjualan', 'Stok Keluar', 'Mutasi', 'Hibah', 'Retur Beli', 'Opname', 'Pengambilan Medis')
+                ) as lain_lain_keluar")
             ])
             ->orderBy('databarang.nama_brng', 'asc');
     }
