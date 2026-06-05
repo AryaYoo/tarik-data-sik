@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="space-y-6" x-data="{ showDetail: false }">
+    <div class="space-y-6">
         <!-- Header -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -71,19 +71,20 @@
                         Ekspor PDF
                     </a>
                 </div>
-
-                <!-- Toggle Detail Button -->
-                <button type="button" @click="showDetail = !showDetail" 
-                    class="bg-white border border-gray-200 text-gray-700 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span x-text="showDetail ? 'Sembunyikan Detail Sub-Transaksi' : 'Tampilkan Detail Sub-Transaksi'">Tampilkan Detail Sub-Transaksi</span>
-                </button>
             </div>
 
             <!-- Table Section -->
+            <div x-data="{ showDetail: false }" class="space-y-3">
+                <div class="flex justify-end pr-2">
+                    <label class="flex items-center cursor-pointer gap-2 select-none hover:opacity-80 transition-opacity">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tampilkan Rincian Sub-Transaksi</span>
+                        <div class="relative">
+                            <input type="checkbox" x-model="showDetail" class="sr-only">
+                            <div class="block bg-gray-200 w-10 h-6 rounded-full transition-colors duration-300" :class="{'bg-primary': showDetail}"></div>
+                            <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm" :class="{'transform translate-x-4': showDetail}"></div>
+                        </div>
+                    </label>
+                </div>
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -256,6 +257,7 @@
                     </div>
                 @endif
             </div>
+            </div>
         @else
             <!-- Empty State -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-20 text-center">
@@ -360,47 +362,50 @@
                     </div>
 
                     <div>
-                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">3. Pemetaan Basis Data (SIMRS Khanza)</h4>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">3. Pemetaan Basis Data — Semua Kolom (SIMRS Khanza)</h4>
+                        <p class="text-xs text-gray-500 mb-2">Semua kolom bertanda 🟢 hanya tampil saat toggle <strong>Rincian Sub-Transaksi</strong> diaktifkan.</p>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs border border-gray-100">
                                 <thead>
                                     <tr class="bg-gray-50 border-b border-gray-100">
                                         <th class="p-2 font-bold text-gray-500 uppercase">Kolom UI</th>
-                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Tabel</th>
-                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Kolom / Kondisi Posisi</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Tabel SQL</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kondisi / Kolom</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-50">
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Kode Barang</td>
-                                        <td class="p-2 font-mono text-primary">databarang</td>
-                                        <td class="p-2 font-mono text-primary">kode_brng</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Nama Barang</td>
-                                        <td class="p-2 font-mono text-primary">databarang</td>
-                                        <td class="p-2 font-mono text-primary">nm_brng</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Harga Barang</td>
-                                        <td class="p-2 font-mono text-primary">databarang</td>
-                                        <td class="p-2 font-mono text-primary">h_beli</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Stok Awal</td>
-                                        <td class="p-2 font-mono text-primary">riwayat_barang_medis</td>
-                                        <td class="p-2 text-gray-600">Transaksi pertama (<code>ORDER BY tanggal ASC, jam ASC LIMIT 1</code>).</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Penerimaan Supplier</td>
-                                        <td class="p-2 font-mono text-primary">riwayat_barang_medis</td>
-                                        <td class="p-2 text-gray-600">posisi IN ('Penerimaan', 'Pengadaan')</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Pemberian Obat</td>
-                                        <td class="p-2 font-mono text-primary">riwayat_barang_medis</td>
-                                        <td class="p-2 text-gray-600">posisi = 'Pemberian Obat'</td>
-                                    </tr>
+                                    <tr class="bg-gray-50/50"><td colspan="3" class="p-2 font-black text-gray-600 uppercase text-[10px] tracking-widest">— Identitas Barang —</td></tr>
+                                    <tr><td class="p-2 font-semibold text-gray-700">Kode Barang</td><td class="p-2 font-mono text-primary">databarang</td><td class="p-2 font-mono text-gray-600">kode_brng</td></tr>
+                                    <tr><td class="p-2 font-semibold text-gray-700">Nama Barang</td><td class="p-2 font-mono text-primary">databarang</td><td class="p-2 font-mono text-gray-600">nama_brng</td></tr>
+                                    <tr><td class="p-2 font-semibold text-gray-700">Satuan</td><td class="p-2 font-mono text-primary">kodesatuan</td><td class="p-2 font-mono text-gray-600">satuan</td></tr>
+                                    <tr><td class="p-2 font-semibold text-gray-700">Harga Barang</td><td class="p-2 font-mono text-primary">databarang</td><td class="p-2 font-mono text-gray-600">h_beli</td></tr>
+                                    <tr><td class="p-2 font-semibold text-gray-700">Stok Awal</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">stok_awal — record pertama (ORDER BY tanggal ASC, jam ASC LIMIT 1)</td></tr>
+                                    <tr class="bg-green-50/50"><td colspan="3" class="p-2 font-black text-green-700 uppercase text-[10px] tracking-widest">— Kolom Masuk (Penerimaan) —</td></tr>
+                                    <tr><td class="p-2 font-semibold text-green-700">Total Masuk</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">SUM(GREATEST(stok_akhir - stok_awal, 0)) — semua posisi</td></tr>
+                                    <tr><td class="p-2 text-green-600">🟢 Penerimaan Supplier</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi IN ('Penerimaan', 'Pengadaan')</td></tr>
+                                    <tr><td class="p-2 text-green-600">🟢 Retur Pasien</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Retur Pasien'</td></tr>
+                                    <tr><td class="p-2 text-green-600">🟢 Mutasi Masuk</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Mutasi' (stok_akhir &gt; stok_awal)</td></tr>
+                                    <tr><td class="p-2 text-green-600">🟢 Opname Lebih</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Opname' (stok_akhir &gt; stok_awal)</td></tr>
+                                    <tr><td class="p-2 text-green-600">🟢 Lain-lain (Masuk)</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi NOT IN ('Penerimaan','Pengadaan','Retur Pasien','Mutasi','Opname') — naik stok</td></tr>
+                                    <tr><td class="p-2 font-semibold text-gray-700">Resep Dokter</td><td class="p-2 font-mono text-primary">resep_dokter JOIN resep_obat</td><td class="p-2 text-gray-600">SUM(resep_dokter.jml) — draft, tidak memotong stok</td></tr>
+                                    <tr class="bg-red-50/50"><td colspan="3" class="p-2 font-black text-red-700 uppercase text-[10px] tracking-widest">— Kolom Keluar (Pemberian) —</td></tr>
+                                    <tr><td class="p-2 font-semibold text-red-700">Total Keluar</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">SUM(GREATEST(stok_awal - stok_akhir, 0)) — semua posisi</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Pemberian Obat</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Pemberian Obat'</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Resep Pulang</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Resep Pulang'</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Detail Jual</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Penjualan'</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Stok Keluar</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Stok Keluar'</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Mutasi Keluar</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Mutasi' (stok_awal &gt; stok_akhir)</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Hibah</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Hibah'</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Retur Supplier</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Retur Beli'</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Opname Kurang</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Opname' (stok_awal &gt; stok_akhir)</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Pengambilan Medis</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi = 'Pengambilan Medis'</td></tr>
+                                    <tr><td class="p-2 text-red-600">🟢 Lain-lain (Keluar)</td><td class="p-2 font-mono text-primary">riwayat_barang_medis</td><td class="p-2 text-gray-600">posisi NOT IN ('Pemberian Obat','Resep Pulang','Penjualan','Stok Keluar','Mutasi','Hibah','Retur Beli','Opname','Pengambilan Medis') — turun stok</td></tr>
+                                    <tr class="bg-blue-50/50"><td colspan="3" class="p-2 font-black text-blue-700 uppercase text-[10px] tracking-widest">— Kolom Perencanaan (Kalkulasi PHP) —</td></tr>
+                                    <tr><td class="p-2 font-semibold text-blue-700">Stok Akhir</td><td class="p-2 text-gray-500 italic">Kalkulasi</td><td class="p-2 text-gray-600">Stok Awal + Total Masuk - Total Keluar</td></tr>
+                                    <tr><td class="p-2 font-semibold text-blue-700">Buffer Stock 15%</td><td class="p-2 text-gray-500 italic">Kalkulasi</td><td class="p-2 text-gray-600">floor(Total Keluar × 0.15)</td></tr>
+                                    <tr><td class="p-2 font-semibold text-blue-700">Rencana Pemakaian</td><td class="p-2 text-gray-500 italic">Kalkulasi</td><td class="p-2 text-gray-600">Total Keluar + Buffer Stock</td></tr>
+                                    <tr><td class="p-2 font-semibold text-blue-700">Rencana Pengadaan</td><td class="p-2 text-gray-500 italic">Kalkulasi</td><td class="p-2 text-gray-600">IF(Rencana Pemakaian &gt; Stok Akhir, Rencana Pemakaian - Stok Akhir, 0)</td></tr>
+                                    <tr><td class="p-2 font-semibold text-orange-700">Rencana Anggaran</td><td class="p-2 text-gray-500 italic">Kalkulasi</td><td class="p-2 text-gray-600">Rencana Pengadaan × Harga Barang (h_beli)</td></tr>
                                 </tbody>
                             </table>
                         </div>
