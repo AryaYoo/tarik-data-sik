@@ -24,7 +24,7 @@
                 <span>Real-time Data</span>
             </div>
         </div>
-
+ 
         <!-- Filter Card -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <form action="{{ route('farmasi.waktu_tunggu_ralan.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">

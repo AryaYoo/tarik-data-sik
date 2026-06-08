@@ -39,22 +39,25 @@
                 <th rowspan="2" width="38" class="text-right">Harga</th>
                 <th rowspan="2" width="20" class="text-right">Awal</th>
                 <!-- Masuk -->
-                <th colspan="6" class="bg-green text-green">&#x2B06; MASUK</th>
+                <th @if($show_detail) colspan="6" @else colspan="1" @endif class="bg-green text-green">&#x2B06; MASUK</th>
                 <!-- Netral -->
                 <th rowspan="2" width="20" class="text-right">Resep Dr</th>
                 <!-- Keluar -->
-                <th colspan="11" style="background-color:#dc2626; color:white;">&#x2B07; KELUAR</th>
+                <th @if($show_detail) colspan="11" @else colspan="1" @endif style="background-color:#dc2626; color:white;">&#x2B07; KELUAR</th>
                 <!-- Perencanaan -->
                 <th colspan="5" class="bg-blue text-blue">Rencana Anggaran</th>
             </tr>
             <tr>
                 <th width="22" class="bg-green text-green">Total</th>
+                @if($show_detail)
                 <th width="15" class="bg-green text-green">Peng</th>
                 <th width="15" class="bg-green text-green">Rtr.P</th>
                 <th width="15" class="bg-green text-green">Mutasi</th>
                 <th width="15" class="bg-green text-green">Op(+)</th>
                 <th width="15" class="bg-green text-green">Lain</th>
+                @endif
                 <th width="22" style="background-color:#fecaca; color:#dc2626;">Total</th>
+                @if($show_detail)
                 <th width="15" style="background-color:#fecaca; color:#dc2626;">Beri</th>
                 <th width="15" style="background-color:#fecaca; color:#dc2626;">R.Plg</th>
                 <th width="15" style="background-color:#fecaca; color:#dc2626;">Jual</th>
@@ -65,6 +68,7 @@
                 <th width="15" style="background-color:#fecaca; color:#dc2626;">Op(-)</th>
                 <th width="15" style="background-color:#fecaca; color:#dc2626;">Peng</th>
                 <th width="15" style="background-color:#fecaca; color:#dc2626;">Lain</th>
+                @endif
                 
                 <th width="20" class="bg-blue text-blue">Akhir</th>
                 <th width="20" class="bg-blue text-blue">Buffer</th>
@@ -100,15 +104,18 @@
                     <td class="text-right">{{ number_format($stok_awal, 0, ',', '.') }}</td>
                     <!-- Masuk -->
                     <td class="text-right text-green bg-green" style="font-weight:bold;">{{ number_format($penerimaan, 0, ',', '.') }}</td>
+                    @if($show_detail)
                     <td class="text-right text-green bg-green">{{ number_format($item->pengadaan, 0, ',', '.') }}</td>
                     <td class="text-right text-green bg-green">{{ number_format($item->retur_pasien, 0, ',', '.') }}</td>
                     <td class="text-right text-green bg-green">{{ number_format($item->mutasi_masuk, 0, ',', '.') }}</td>
                     <td class="text-right text-green bg-green">{{ number_format($item->opname_lebih, 0, ',', '.') }}</td>
                     <td class="text-right text-green bg-green">{{ number_format($item->lain_lain_masuk, 0, ',', '.') }}</td>
+                    @endif
                     <!-- Resep Dr -->
                     <td class="text-right">{{ number_format($item->resep_dokter, 0, ',', '.') }}</td>
                     <!-- Keluar -->
                     <td class="text-right text-red bg-red" style="font-weight:bold;">{{ number_format($pemberian, 0, ',', '.') }}</td>
+                    @if($show_detail)
                     <td class="text-right text-red bg-red">{{ number_format($item->pemberian_obat, 0, ',', '.') }}</td>
                     <td class="text-right text-red bg-red">{{ number_format($item->resep_pulang, 0, ',', '.') }}</td>
                     <td class="text-right text-red bg-red">{{ number_format($item->detail_jual, 0, ',', '.') }}</td>
@@ -119,6 +126,7 @@
                     <td class="text-right text-red bg-red">{{ number_format($item->opname_kurang, 0, ',', '.') }}</td>
                     <td class="text-right text-red bg-red">{{ number_format($item->pengambilan_medis, 0, ',', '.') }}</td>
                     <td class="text-right text-red bg-red">{{ number_format($item->lain_lain_keluar, 0, ',', '.') }}</td>
+                    @endif
                     <!-- Perencanaan -->
                     <td class="text-right bg-blue" style="font-weight:bold;">{{ number_format($stok_akhir, 0, ',', '.') }}</td>
                     <td class="text-right bg-blue">{{ number_format($buffer_stock, 0, ',', '.') }}</td>
@@ -128,7 +136,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="28" class="text-center" style="font-style: italic; color: #777; padding: 20px;">Tidak ada data pada periode ini.</td>
+                    <td colspan="{{ $show_detail ? 28 : 13 }}" class="text-center" style="font-style: italic; color: #777; padding: 20px;">Tidak ada data pada periode ini.</td>
                 </tr>
             @endforelse
         </tbody>

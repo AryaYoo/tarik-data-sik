@@ -552,7 +552,21 @@ class FarmasiRepository
                     FROM detail_pemberian_obat
                     WHERE detail_pemberian_obat.kode_brng = databarang.kode_brng
                       AND detail_pemberian_obat.tgl_perawatan BETWEEN '$startDate' AND '$endDate'
-                ) as pemberian")
+                ) as pemberian"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(rd.jml), 0)
+                    FROM resep_dokter rd
+                    JOIN resep_obat ro ON rd.no_resep = ro.no_resep
+                    WHERE rd.kode_brng = databarang.kode_brng
+                      AND ro.tgl_perawatan BETWEEN '$startDate' AND '$endDate'
+                ) as resep_dokter"),
+                DB::raw("(
+                    SELECT COALESCE(SUM(dj.jumlah), 0)
+                    FROM detailjual dj
+                    JOIN penjualan pj ON dj.nota_jual = pj.nota_jual
+                    WHERE dj.kode_brng = databarang.kode_brng
+                      AND pj.tgl_jual BETWEEN '$startDate' AND '$endDate'
+                ) as detail_jual")
             ])
             ->orderBy('databarang.nama_brng', 'asc');
     }

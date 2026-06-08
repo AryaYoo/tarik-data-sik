@@ -278,19 +278,21 @@ class FarmasiController extends Controller
     {
         $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
         $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+        $show_detail = $request->show_detail == 1;
 
         $data = $this->farmasiRepository->getRencanaAnggaranDetailQuery($tgl_mulai, $tgl_selesai)->get();
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\RencanaAnggaranDetailExport($data, $tgl_mulai, $tgl_selesai), "rencana-anggaran-detail-$tgl_mulai-$tgl_selesai.xlsx");
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\RencanaAnggaranDetailExport($data, $tgl_mulai, $tgl_selesai, $show_detail), "rencana-anggaran-detail-$tgl_mulai-$tgl_selesai.xlsx");
     }
 
     public function rencanaAnggaranDetailExportPdf(Request $request)
     {
         $tgl_mulai = $request->tgl_mulai ?? date('Y-m-d');
         $tgl_selesai = $request->tgl_selesai ?? date('Y-m-d');
+        $show_detail = $request->show_detail == 1;
 
         $data = $this->farmasiRepository->getRencanaAnggaranDetailQuery($tgl_mulai, $tgl_selesai)->get();
         
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.rencana_anggaran_detail.pdf', compact('data', 'tgl_mulai', 'tgl_selesai'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('farmasi.rencana_anggaran_detail.pdf', compact('data', 'tgl_mulai', 'tgl_selesai', 'show_detail'))->setPaper('a4', 'landscape');
         return $pdf->download("rencana-anggaran-detail-$tgl_mulai-$tgl_selesai.pdf");
     }
 }

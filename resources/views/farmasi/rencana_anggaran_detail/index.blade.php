@@ -55,7 +55,7 @@
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-2">
                     <a href="javascript:void(0)" 
-                        onclick="handleDownload('{{ route('farmasi.rencana_anggaran_detail.export.excel', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai]) }}', 'rencana-anggaran-detail-{{ $tgl_mulai }}-{{ $tgl_selesai }}.xlsx')"
+                        onclick="let sd = document.getElementById('toggleDetail') && document.getElementById('toggleDetail').checked ? 1 : 0; handleDownload('{{ route('farmasi.rencana_anggaran_detail.export.excel', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai]) }}&show_detail=' + sd, 'rencana-anggaran-detail-{{ $tgl_mulai }}-{{ $tgl_selesai }}.xlsx')"
                         class="bg-white border border-gray-200 text-gray-700 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -63,7 +63,7 @@
                         Ekspor Excel
                     </a>
                     <a href="javascript:void(0)" 
-                        onclick="handleDownload('{{ route('farmasi.rencana_anggaran_detail.export.pdf', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai]) }}', 'rencana-anggaran-detail-{{ $tgl_mulai }}-{{ $tgl_selesai }}.pdf')"
+                        onclick="let sd = document.getElementById('toggleDetail') && document.getElementById('toggleDetail').checked ? 1 : 0; handleDownload('{{ route('farmasi.rencana_anggaran_detail.export.pdf', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai]) }}&show_detail=' + sd, 'rencana-anggaran-detail-{{ $tgl_mulai }}-{{ $tgl_selesai }}.pdf')"
                         class="bg-white border border-gray-200 text-gray-700 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -79,7 +79,7 @@
                     <label class="flex items-center cursor-pointer gap-2 select-none hover:opacity-80 transition-opacity">
                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tampilkan Rincian Sub-Transaksi</span>
                         <div class="relative">
-                            <input type="checkbox" x-model="showDetail" class="sr-only">
+                            <input type="checkbox" id="toggleDetail" x-model="showDetail" class="sr-only">
                             <div class="block bg-gray-200 w-10 h-6 rounded-full transition-colors duration-300" :class="{'bg-primary': showDetail}"></div>
                             <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 shadow-sm" :class="{'transform translate-x-4': showDetail}"></div>
                         </div>

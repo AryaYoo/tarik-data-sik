@@ -74,6 +74,8 @@
                 <th width="50" class="text-right">Stok Awal</th>
                 <th width="55" class="text-right">Penerimaan</th>
                 <th width="55" class="text-right">Pemberian</th>
+                <th width="55" class="text-right" style="display: none;">Resep Dokter</th>
+                <th width="55" class="text-right" style="display: none;">Detail Jual</th>
                 <th width="50" class="text-right">Stok Akhir</th>
                 <th width="65" class="text-right">Buffer Stock 15%</th>
                 <th width="70" class="text-right">Rencana Pemakaian</th>
@@ -108,6 +110,8 @@
                     <td class="text-right">{{ number_format($stok_awal, 0, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($penerimaan, 0, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($pemberian, 0, ',', '.') }}</td>
+                    <td class="text-right" style="color:#7c3aed; display: none;">{{ number_format($item->resep_dokter, 0, ',', '.') }}</td>
+                    <td class="text-right" style="color:#c2410c; display: none;">{{ number_format($item->detail_jual, 0, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($stok_akhir, 0, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($buffer_stock, 0, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($rencana_pemakaian, 0, ',', '.') }}</td>
