@@ -30,12 +30,12 @@ class LaboratoriumExport implements FromCollection, WithHeadings, WithMapping, W
     {
         return [
             'No',
-            'Tanggal Periksa',
+            'Tanggal Sampel',
             'Nama Pasien',
             'Jenis Bayar',
             'Pemeriksaan',
             'No. RM',
-            'Jam Permintaan',
+            'Jam Sampel',
             'Tanggal Hasil',
             'Jam Hasil',
             'Total Waktu Tunggu',
@@ -50,12 +50,12 @@ class LaboratoriumExport implements FromCollection, WithHeadings, WithMapping, W
 
         return [
             $no,
-            $row->tgl_permintaan,
+            $row->tgl_sampel,
             $row->nm_pasien,
             $row->png_jawab,
             $row->pemeriksaan,
             $row->no_rkm_medis,
-            $row->jam_permintaan,
+            $row->jam_sampel,
             $row->tgl_hasil,
             $row->jam_hasil,
             $this->formatDuration($row->total_waktu),
@@ -82,9 +82,10 @@ class LaboratoriumExport implements FromCollection, WithHeadings, WithMapping, W
         $parts = explode(':', $timeString);
         $hours = (int)($parts[0] ?? 0);
         $minutes = (int)($parts[1] ?? 0);
+        $seconds = (int)($parts[2] ?? 0);
         
-        $totalMinutes = ($hours * 60) + $minutes;
-        return ($totalMinutes < 60 && $hours == 0) ? 'Tepat Waktu' : 'Tidak Sesuai';
+        $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
+        return $totalSeconds < 3600 ? 'Tepat Waktu' : 'Tidak Sesuai';
     }
 
     public function styles(Worksheet $sheet)

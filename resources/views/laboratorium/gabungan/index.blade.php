@@ -94,7 +94,7 @@
                         <thead>
                             <tr class="bg-gray-50/50 border-b border-gray-100">
                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">No</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Tanggal Periksa</th>
+                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Tanggal Sampel</th>
                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Nama Pasien</th>
                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Jenis Bayar</th>
                                 <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Pemeriksaan</th>
@@ -113,7 +113,7 @@
                                     </td>
                                     <td class="px-6 py-5">
                                         <div class="text-sm font-black text-gray-700">
-                                            {{ \Carbon\Carbon::parse($item->tgl_permintaan)->format('d/m/Y') }}
+                                            {{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-5">
@@ -145,8 +145,8 @@
                                     <td class="px-6 py-5 text-center">
                                         <div class="flex items-center justify-center gap-3">
                                             <div class="text-center">
-                                                <div class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">Minta</div>
-                                                <div class="text-sm font-black text-gray-600">{{ $item->jam_permintaan }}</div>
+                                                <div class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">Sampel</div>
+                                                <div class="text-sm font-black text-gray-600">{{ $item->jam_sampel }}</div>
                                             </div>
                                             <div class="h-8 w-px bg-gray-100"></div>
                                             <div class="text-center">
@@ -158,11 +158,13 @@
                                     <td class="px-6 py-5 text-center">
                                         @php
                                             $parts = explode(':', $item->total_waktu);
-                                            $hours = (int)$parts[0];
-                                            $minutes = (int)$parts[1];
-                                            $seconds = (int)$parts[2];
+                                            $hours = (int)($parts[0] ?? 0);
+                                            $minutes = (int)($parts[1] ?? 0);
+                                            $seconds = (int)($parts[2] ?? 0);
+                                            $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
                                             
-                                            $colorClass = $hours > 0 || $minutes >= 60 ? 'text-red-600 bg-red-50' : ($minutes >= 30 ? 'text-orange-600 bg-orange-50' : 'text-primary bg-primary/10');
+                                            $isTepatWaktu = $totalSeconds < 3600;
+                                            $colorClass = $isTepatWaktu ? 'text-primary bg-primary/10' : 'text-red-600 bg-red-50';
                                         @endphp
                                         <span class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-black {{ $colorClass }} shadow-sm">
                                             @if($hours > 0) {{ $hours }}j @endif
@@ -171,10 +173,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-5 text-center">
-                                        @php
-                                            $totalMinutes = ($hours * 60) + $minutes;
-                                        @endphp
-                                        @if($totalMinutes < 60 && $hours == 0)
+                                        @if($isTepatWaktu)
                                             <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black bg-primary/10 text-primary uppercase tracking-widest border border-primary/20">TEPAT WAKTU</span>
                                         @else
                                             <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black bg-red-100 text-red-600 uppercase tracking-widest border border-red-200">TIDAK SESUAI</span>
@@ -247,7 +246,7 @@
                     <div>
                         <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">1. Deskripsi Menu</h4>
                         <p class="text-sm text-gray-600 leading-relaxed">
-                            Menu **Waktu Tunggu Hasil Lab - Gabungan** digunakan untuk mengukur dan memonitor durasi waktu penyelesaian (Turn Around Time / TAT) pemeriksaan laboratorium bagi seluruh pasien rumah sakit, baik rawat jalan maupun rawat inap. Pengukuran dihitung mulai dari jam permintaan dokter hingga jam hasil laboratorium selesai divalidasi dan diunggah.
+                            Menu **Waktu Tunggu Hasil Lab - Gabungan** digunakan untuk mengukur dan memonitor durasi waktu penyelesaian (Turn Around Time / TAT) pemeriksaan laboratorium bagi seluruh pasien rumah sakit, baik rawat jalan maupun rawat inap. Pengukuran dihitung mulai dari waktu sampel diambil hingga jam hasil laboratorium selesai divalidasi dan diunggah.
                         </p>
                     </div>
 
@@ -255,10 +254,10 @@
                         <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">2. Aturan & Rumus Kalkulasi</h4>
                         <ul class="list-disc pl-5 space-y-4 text-sm text-gray-600">
                             <li>
-                                <strong>Waktu Tunggu Lab (Durasi):</strong> Selisih waktu antara waktu penyerahan hasil laboratorium dengan waktu pengajuan permintaan awal.
+                                <strong>Waktu Tunggu Lab (Durasi):</strong> Selisih waktu antara waktu penyerahan hasil laboratorium dengan waktu pengambilan sampel.
                                 <div class="mt-1.5 bg-gray-50 p-2.5 rounded-xl border border-gray-100 font-mono text-[10px] text-gray-700 shadow-inner">
-                                    <strong class="text-primary text-[11px]">Formula Matematika:</strong> Durasi = Waktu Hasil Keluar - Waktu Permintaan<br>
-                                    <strong class="text-primary text-[11px]">Formula Excel:</strong> <code class="text-red-600 font-bold">=(F2+G2)-(D2+E2)</code> (Di mana kolom F & G merupakan tanggal & jam hasil, dan kolom D & E merupakan tanggal & jam permintaan).
+                                    <strong class="text-primary text-[11px]">Formula Matematika:</strong> Durasi = Waktu Hasil Keluar - Waktu Sampel<br>
+                                    <strong class="text-primary text-[11px]">Formula Excel:</strong> <code class="text-red-600 font-bold">=(F2+G2)-(D2+E2)</code> (Di mana kolom F & G merupakan tanggal & jam hasil, dan kolom D & E merupakan tanggal & jam sampel).
                                 </div>
                             </li>
                             <li>
@@ -316,10 +315,10 @@
                                         <td class="p-2 text-gray-600">Status rujukan asal pasien (ralan / ranap).</td>
                                     </tr>
                                     <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Waktu Minta</td>
+                                        <td class="p-2 font-semibold text-gray-700">Waktu Sampel</td>
                                         <td class="p-2 font-mono text-primary">permintaan_lab</td>
-                                        <td class="p-2 font-mono text-primary">tgl_permintaan, jam_permintaan</td>
-                                        <td class="p-2 text-gray-600">Waktu saat permintaan laboratorium diajukan.</td>
+                                        <td class="p-2 font-mono text-primary">tgl_sampel, jam_sampel</td>
+                                        <td class="p-2 text-gray-600">Waktu saat sampel laboratorium diambil.</td>
                                     </tr>
                                     <tr>
                                         <td class="p-2 font-semibold text-gray-700">Waktu Hasil</td>

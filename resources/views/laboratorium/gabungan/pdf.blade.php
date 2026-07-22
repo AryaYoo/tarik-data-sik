@@ -73,28 +73,26 @@
             @forelse($data as $index => $item)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ \Carbon\Carbon::parse($item->tgl_permintaan)->format('d/m/Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}</td>
                     <td>{{ $item->nm_pasien }}</td>
                     <td>{{ $item->png_jawab }}</td>
                     <td>{{ $item->pemeriksaan }}</td>
                     <td class="text-center">{{ $item->no_rkm_medis }}</td>
                     <td class="text-center">{{ strtoupper($item->status) }}</td>
-                    <td class="text-center">{{ $item->jam_permintaan }}</td>
+                    <td class="text-center">{{ $item->jam_sampel }}</td>
                     <td class="text-center">{{ $item->jam_hasil }}</td>
                     <td class="text-center">
                         @php
                             $parts = explode(':', $item->total_waktu);
-                            $hours = (int)$parts[0];
-                            $minutes = (int)$parts[1];
-                            $seconds = (int)$parts[2];
+                            $hours = (int)($parts[0] ?? 0);
+                            $minutes = (int)($parts[1] ?? 0);
+                            $seconds = (int)($parts[2] ?? 0);
+                            $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
+                            $isTepat = $totalSeconds < 3600;
                         @endphp
                         {{ $hours }} jam {{ $minutes }} menit {{ $seconds }} detik
                     </td>
                     <td class="text-center">
-                        @php
-                            $totalMinutes = ($hours * 60) + $minutes;
-                            $isTepat = ($totalMinutes < 60 && $hours == 0);
-                        @endphp
                         @if($isTepat)
                             Tepat Waktu
                         @else

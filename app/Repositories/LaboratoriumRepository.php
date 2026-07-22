@@ -17,7 +17,7 @@ class LaboratoriumRepository
             ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
             ->leftJoin('permintaan_detail_permintaan_lab', 'permintaan_lab.noorder', '=', 'permintaan_detail_permintaan_lab.noorder')
             ->leftJoin('jns_perawatan_lab', 'permintaan_detail_permintaan_lab.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
-            ->whereBetween('permintaan_lab.tgl_permintaan', [$startDate, $endDate]);
+            ->whereBetween('permintaan_lab.tgl_sampel', [$startDate, $endDate]);
 
         if ($status !== 'gabungan') {
             $query->where('permintaan_lab.status', $status);
@@ -28,7 +28,7 @@ class LaboratoriumRepository
         }
 
         if ($ketepatan) {
-            $diffSql = "TIMESTAMPDIFF(SECOND, CONCAT(permintaan_lab.tgl_permintaan, ' ', permintaan_lab.jam_permintaan), CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil))";
+            $diffSql = "TIMESTAMPDIFF(SECOND, CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel), CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil))";
             if ($ketepatan === 'tepat') {
                 $query->whereRaw("$diffSql < 3600");
             } elseif ($ketepatan === 'tidak_tepat') {
@@ -38,20 +38,20 @@ class LaboratoriumRepository
 
         return $query->select([
                 'permintaan_lab.noorder',
-                'permintaan_lab.tgl_permintaan',
+                'permintaan_lab.tgl_sampel',
                 'pasien.nm_pasien',
                 'pasien.no_rkm_medis',
-                'permintaan_lab.jam_permintaan',
+                'permintaan_lab.jam_sampel',
                 'permintaan_lab.tgl_hasil',
                 'permintaan_lab.jam_hasil',
                 'permintaan_lab.no_rawat',
                 'permintaan_lab.status',
                 'penjab.png_jawab',
                 DB::raw("GROUP_CONCAT(DISTINCT jns_perawatan_lab.nm_perawatan SEPARATOR ', ') as pemeriksaan"),
-                DB::raw("TIMEDIFF(CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil), CONCAT(permintaan_lab.tgl_permintaan, ' ', permintaan_lab.jam_permintaan)) as total_waktu")
+                DB::raw("TIMEDIFF(CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil), CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel)) as total_waktu")
             ])
-            ->groupBy('permintaan_lab.noorder', 'permintaan_lab.tgl_permintaan', 'pasien.nm_pasien', 'pasien.no_rkm_medis', 'permintaan_lab.jam_permintaan', 'permintaan_lab.tgl_hasil', 'permintaan_lab.jam_hasil', 'permintaan_lab.no_rawat', 'permintaan_lab.status', 'penjab.png_jawab')
-            ->orderBy('permintaan_lab.tgl_permintaan', 'desc')
-            ->orderBy('permintaan_lab.jam_permintaan', 'desc');
+            ->groupBy('permintaan_lab.noorder', 'permintaan_lab.tgl_sampel', 'pasien.nm_pasien', 'pasien.no_rkm_medis', 'permintaan_lab.jam_sampel', 'permintaan_lab.tgl_hasil', 'permintaan_lab.jam_hasil', 'permintaan_lab.no_rawat', 'permintaan_lab.status', 'penjab.png_jawab')
+            ->orderBy('permintaan_lab.tgl_sampel', 'desc')
+            ->orderBy('permintaan_lab.jam_sampel', 'desc');
     }
 }
