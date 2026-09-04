@@ -104,4 +104,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/laboratorium-gabungan', [LaboratoriumController::class, 'index_gabungan'])->name('laboratorium.index_gabungan');
     Route::get('/laboratorium/export/excel', [LaboratoriumController::class, 'exportExcel'])->name('laboratorium.export.excel');
     Route::get('/laboratorium/export/pdf', [LaboratoriumController::class, 'exportPdf'])->name('laboratorium.export.pdf');
+    Route::get('/laboratorium/kategori-pasien', [LaboratoriumController::class, 'kategoriPasien'])->name('laboratorium.kategori_pasien.index');
+    Route::get('/laboratorium/kategori-pasien/export/excel', [LaboratoriumController::class, 'kategoriPasienExportExcel'])->name('laboratorium.kategori_pasien.export.excel');
+    Route::get('/laboratorium/kategori-pasien/export/pdf', [LaboratoriumController::class, 'kategoriPasienExportPdf'])->name('laboratorium.kategori_pasien.export.pdf');
 });
