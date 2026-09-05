@@ -121,14 +121,20 @@ class LaboratoriumController extends Controller
 
     public function kategoriPasien(Request $request)
     {
-        $tgl_mulai   = $request->tgl_mulai   ?? date('Y-m-01');
-        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-t');
-        $kd_pj       = $request->kd_pj;
+        $tgl_mulai     = $request->tgl_mulai   ?? date('Y-m-01');
+        $tgl_selesai   = $request->tgl_selesai ?? date('Y-m-t');
+        $kd_pj         = $request->kd_pj;
         $kategori_usia = $request->kategori_usia;
 
-        $penjabs = DB::table('penjab')->select('kd_pj', 'png_jawab')->orderBy('png_jawab', 'asc')->get();
+        // Ambil filter kode periksa dari session (jika user pernah custom setting)
+        $session_kode      = session('lab_kategori_selected_kode', null);
+        $filter_kode_aktif = !is_null($session_kode);
+        $kode_periksa_list = $session_kode;
 
-        $data = null;
+        $penjabs        = DB::table('penjab')->select('kd_pj', 'png_jawab')->orderBy('png_jawab', 'asc')->get();
+        $availableKode  = $this->labRepository->getAvailableKodePeriksa();
+
+        $data    = null;
         $summary = [];
 
         if ($request->has('tgl_mulai')) {
@@ -139,27 +145,50 @@ class LaboratoriumController extends Controller
             ]);
 
             $data = $this->labRepository
-                ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, $kategori_usia)
+                ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, $kategori_usia, $kode_periksa_list)
                 ->paginate(20);
-            $data->appends($request->all());
+            $data->appends($request->except('kode_periksa'));
 
-            // Hitung summary per kategori usia (tanpa pagination, pasien unik dihitung 1)
+            // Hitung summary per kategori usia (tanpa pagination, pasien unik dihitung berdasarkan No. RM atau Nama)
             $allData = $this->labRepository
-                ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, null)
+                ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, null, $kode_periksa_list)
                 ->get();
 
-            $summary = [
-                'neonatus' => $allData->where('kategori_usia', 'Neonatus')->pluck('no_rkm_medis')->unique()->count(),
-                'bayi'     => $allData->where('kategori_usia', 'Bayi')->pluck('no_rkm_medis')->unique()->count(),
-                'anak'     => $allData->where('kategori_usia', 'Anak')->pluck('no_rkm_medis')->unique()->count(),
-                'dewasa'   => $allData->where('kategori_usia', 'Dewasa')->pluck('no_rkm_medis')->unique()->count(),
-                'total'    => $allData->pluck('no_rkm_medis')->unique()->count(),
-            ];
+            $summary = $this->labRepository->calculateKategoriPasienSummary($allData);
         }
 
         return view('laboratorium.kategori_pasien.index', compact(
-            'data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'kategori_usia', 'summary'
+            'data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'kategori_usia', 'summary',
+            'availableKode', 'filter_kode_aktif', 'session_kode'
         ));
+    }
+
+    /**
+     * AJAX: Kembalikan semua kode periksa yang tersedia (untuk inisialisasi modal setting).
+     */
+    public function kategoriPasienAvailableKode()
+    {
+        $kode = $this->labRepository->getAvailableKodePeriksa();
+        return response()->json($kode);
+    }
+
+    /**
+     * AJAX POST: Simpan filter kode periksa ke dalam session
+     */
+    public function kategoriPasienSaveSettings(Request $request)
+    {
+        $kode = $request->input('kode', []);
+        session(['lab_kategori_selected_kode' => $kode]);
+        return response()->json(['success' => true, 'count' => count($kode)]);
+    }
+
+    /**
+     * AJAX POST: Reset filter kode periksa ke default (hapus dari session)
+     */
+    public function kategoriPasienResetSettings(Request $request)
+    {
+        session()->forget('lab_kategori_selected_kode');
+        return response()->json(['success' => true]);
     }
 
     public function kategoriPasienExportExcel(Request $request)
@@ -169,8 +198,11 @@ class LaboratoriumController extends Controller
         $kd_pj         = $request->kd_pj;
         $kategori_usia = $request->kategori_usia;
 
+        // Ambil kode_periksa_list dari session
+        $kode_periksa_list = session('lab_kategori_selected_kode', null);
+
         $data = $this->labRepository
-            ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, $kategori_usia)
+            ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, $kategori_usia, $kode_periksa_list)
             ->get();
 
         return \Maatwebsite\Excel\Facades\Excel::download(
@@ -186,18 +218,15 @@ class LaboratoriumController extends Controller
         $kd_pj         = $request->kd_pj;
         $kategori_usia = $request->kategori_usia;
 
+        // Ambil kode_periksa_list dari session
+        $kode_periksa_list = session('lab_kategori_selected_kode', null);
+
         $data = $this->labRepository
-            ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, $kategori_usia)
+            ->getKategoriPasienQuery($tgl_mulai, $tgl_selesai, $kd_pj, $kategori_usia, $kode_periksa_list)
             ->get();
 
-        // Hitung summary untuk PDF (pasien unik)
-        $summary = [
-            'neonatus' => $data->where('kategori_usia', 'Neonatus')->pluck('no_rkm_medis')->unique()->count(),
-            'bayi'     => $data->where('kategori_usia', 'Bayi')->pluck('no_rkm_medis')->unique()->count(),
-            'anak'     => $data->where('kategori_usia', 'Anak')->pluck('no_rkm_medis')->unique()->count(),
-            'dewasa'   => $data->where('kategori_usia', 'Dewasa')->pluck('no_rkm_medis')->unique()->count(),
-            'total'    => $data->pluck('no_rkm_medis')->unique()->count(),
-        ];
+        // Hitung summary untuk PDF (pasien unik dihitung berdasarkan No. RM atau Nama)
+        $summary = $this->labRepository->calculateKategoriPasienSummary($data);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
             'laboratorium.kategori_pasien.pdf',

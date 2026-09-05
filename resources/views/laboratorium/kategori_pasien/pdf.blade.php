@@ -60,8 +60,6 @@
         .kat-bayi     { background: #DBEAFE; color: #1D4ED8; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
         .kat-anak     { background: #FEF3C7; color: #B45309; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
         .kat-dewasa   { background: #D1FAE5; color: #065F46; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
-
-        tr:nth-child(even) { background: #f9f9f9; }
     </style>
 </head>
 
@@ -75,7 +73,7 @@
     {{-- Summary --}}
     @if(!empty($summary))
     <div style="margin-bottom: 10px; text-align: center;">
-        <span class="summary-box">Total: <strong>{{ $summary['total'] }}</strong></span>
+        <span class="summary-box">Total: <strong>{{ $summary['total'] }} Pasien</strong></span>
         <span class="summary-box" style="background:#EDE9FE; color:#6D28D9;">Neonatus: <strong>{{ $summary['neonatus'] }}</strong></span>
         <span class="summary-box" style="background:#DBEAFE; color:#1D4ED8;">Bayi: <strong>{{ $summary['bayi'] }}</strong></span>
         <span class="summary-box" style="background:#FEF3C7; color:#B45309;">Anak: <strong>{{ $summary['anak'] }}</strong></span>
@@ -87,10 +85,10 @@
         <thead>
             <tr>
                 <th width="20" class="text-center">No</th>
-                <th width="65">Tgl. Periksa</th>
-                <th width="55">No. RM</th>
+                <th width="55" class="text-center">No. RM</th>
                 <th>Nama Pasien</th>
-                <th width="60">Tgl. Lahir</th>
+                <th width="60" class="text-center">Tgl. Lahir</th>
+                <th width="65">Tgl. Periksa</th>
                 <th width="50" class="text-center">Umur</th>
                 <th width="60" class="text-center">Kategori</th>
                 <th>Jenis Pemeriksaan</th>
@@ -99,40 +97,80 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($data as $index => $item)
-                @php
-                    $umurTahun      = (int) $item->umur_tahun;
-                    $umurBulanTotal = (int) $item->umur_bulan_total;
-                    $bulanSisa      = $umurBulanTotal % 12;
+            @php
+                $groupMap    = [];
+                $nextGroupId = 1;
 
-                    if ($umurTahun >= 1) {
-                        $umurTeks = $umurTahun . ' Th ' . $bulanSisa . ' Bln';
-                    } elseif ($umurBulanTotal >= 1) {
-                        $umurTeks = $umurBulanTotal . ' Bln';
-                    } else {
-                        $hari     = \Carbon\Carbon::parse($item->tgl_lahir)->diffInDays(\Carbon\Carbon::parse($item->tgl_sampel));
-                        $umurTeks = $hari . ' Hr';
+                $groupedData = $data->groupBy(function ($item) use (&$groupMap, &$nextGroupId) {
+                    $rm   = trim((string) ($item->no_rkm_medis ?? ''));
+                    $nama = strtoupper(trim((string) ($item->nm_pasien ?? '')));
+
+                    $groupId = null;
+                    if ($rm !== '' && $rm !== '-' && isset($groupMap['rm:' . $rm])) {
+                        $groupId = $groupMap['rm:' . $rm];
+                    } elseif ($nama !== '' && isset($groupMap['nama:' . $nama])) {
+                        $groupId = $groupMap['nama:' . $nama];
                     }
 
-                    $katClass = match($item->kategori_usia) {
-                        'Neonatus' => 'kat-neonatus',
-                        'Bayi'     => 'kat-bayi',
-                        'Anak'     => 'kat-anak',
-                        default    => 'kat-dewasa',
-                    };
+                    if ($groupId === null) {
+                        $groupId = 'g_' . $nextGroupId++;
+                    }
+
+                    if ($rm !== '' && $rm !== '-') {
+                        $groupMap['rm:' . $rm] = $groupId;
+                    }
+                    if ($nama !== '') {
+                        $groupMap['nama:' . $nama] = $groupId;
+                    }
+
+                    return $groupId;
+                });
+                $patientNo = 1;
+            @endphp
+            @forelse($groupedData as $groupId => $items)
+                @php
+                    $rowCount = $items->count();
+                    $bgStyle = ($patientNo % 2 === 0) ? 'background-color: #f9fbf9;' : 'background-color: #ffffff;';
                 @endphp
-                <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}</td>
-                    <td class="text-center">{{ $item->no_rkm_medis }}</td>
-                    <td>{{ strtoupper($item->nm_pasien) }}</td>
-                    <td>{{ $item->tgl_lahir ? \Carbon\Carbon::parse($item->tgl_lahir)->format('d/m/Y') : '-' }}</td>
-                    <td class="text-center">{{ $umurTeks }}</td>
-                    <td class="text-center"><span class="{{ $katClass }}">{{ $item->kategori_usia }}</span></td>
-                    <td style="font-size:9px;">{{ $item->pemeriksaan ?: '-' }}</td>
-                    <td>{{ $item->png_jawab }}</td>
-                    <td class="text-center">{{ $item->status == 'ralan' ? 'Ralan' : 'Ranap' }}</td>
-                </tr>
+                @foreach($items as $idx => $item)
+                    @php
+                        $umurTahun      = (int) $item->umur_tahun;
+                        $umurBulanTotal = (int) $item->umur_bulan_total;
+                        $bulanSisa      = $umurBulanTotal % 12;
+
+                        if ($umurTahun >= 1) {
+                            $umurTeks = $umurTahun . ' Th ' . $bulanSisa . ' Bln';
+                        } elseif ($umurBulanTotal >= 1) {
+                            $umurTeks = $umurBulanTotal . ' Bln';
+                        } else {
+                            $hari     = \Carbon\Carbon::parse($item->tgl_lahir)->diffInDays(\Carbon\Carbon::parse($item->tgl_sampel));
+                            $umurTeks = $hari . ' Hr';
+                        }
+
+                        $katClass = match($item->kategori_usia) {
+                            'Neonatus' => 'kat-neonatus',
+                            'Bayi'     => 'kat-bayi',
+                            'Anak'     => 'kat-anak',
+                            default    => 'kat-dewasa',
+                        };
+                    @endphp
+                    <tr style="{{ $bgStyle }}">
+                        @if($idx === 0)
+                            <td class="text-center" rowspan="{{ $rowCount }}" style="vertical-align: middle;">{{ $patientNo }}</td>
+                            <td class="text-center" rowspan="{{ $rowCount }}" style="vertical-align: middle;">{{ $item->no_rkm_medis }}</td>
+                            <td rowspan="{{ $rowCount }}" style="vertical-align: middle;">{{ strtoupper($item->nm_pasien) }}</td>
+                            <td class="text-center" rowspan="{{ $rowCount }}" style="vertical-align: middle;">{{ $item->tgl_lahir ? \Carbon\Carbon::parse($item->tgl_lahir)->format('d/m/Y') : '-' }}</td>
+                        @endif
+
+                        <td>{{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}</td>
+                        <td class="text-center">{{ $umurTeks }}</td>
+                        <td class="text-center"><span class="{{ $katClass }}">{{ $item->kategori_usia }}</span></td>
+                        <td style="font-size:9px;">{{ $item->pemeriksaan ?: '-' }}</td>
+                        <td>{{ $item->png_jawab }}</td>
+                        <td class="text-center">{{ $item->status == 'ralan' ? 'Ralan' : 'Ranap' }}</td>
+                    </tr>
+                @endforeach
+                @php $patientNo++; @endphp
             @empty
                 <tr>
                     <td colspan="10" class="text-center">Tidak ada data.</td>

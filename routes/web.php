@@ -105,6 +105,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/laboratorium/export/excel', [LaboratoriumController::class, 'exportExcel'])->name('laboratorium.export.excel');
     Route::get('/laboratorium/export/pdf', [LaboratoriumController::class, 'exportPdf'])->name('laboratorium.export.pdf');
     Route::get('/laboratorium/kategori-pasien', [LaboratoriumController::class, 'kategoriPasien'])->name('laboratorium.kategori_pasien.index');
+    Route::get('/laboratorium/kategori-pasien/available-kode', [LaboratoriumController::class, 'kategoriPasienAvailableKode'])->name('laboratorium.kategori_pasien.available_kode');
+    Route::post('/laboratorium/kategori-pasien/save-settings', [LaboratoriumController::class, 'kategoriPasienSaveSettings'])->name('laboratorium.kategori_pasien.save_settings');
+    Route::post('/laboratorium/kategori-pasien/reset-settings', [LaboratoriumController::class, 'kategoriPasienResetSettings'])->name('laboratorium.kategori_pasien.reset_settings');
     Route::get('/laboratorium/kategori-pasien/export/excel', [LaboratoriumController::class, 'kategoriPasienExportExcel'])->name('laboratorium.kategori_pasien.export.excel');
     Route::get('/laboratorium/kategori-pasien/export/pdf', [LaboratoriumController::class, 'kategoriPasienExportPdf'])->name('laboratorium.kategori_pasien.export.pdf');
 });
