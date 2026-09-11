@@ -231,7 +231,7 @@
                         </div>
 
                         <!-- Rekam Medis Menu -->
-                        <div x-data="{ open: false }" class="space-y-1">
+                        <div x-data="{ open: {{ request()->routeIs('rekam_medis.*') ? 'true' : 'false' }} }" class="space-y-1">
                             <button @click="open = !open"
                                 class="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl hover:bg-white/10 transition text-left">
                                 <div class="flex items-center">
@@ -250,8 +250,15 @@
                                 </svg>
                             </button>
                             <div x-show="open" x-collapse
-                                class="pl-11 pr-4 py-2 space-y-1 text-xs font-medium text-white/60 bg-black/10 rounded-xl mx-2 italic">
-                                Modul belum tersedia
+                                class="pl-11 pr-4 py-2 space-y-1 text-xs font-medium text-white/80 bg-black/10 rounded-xl mx-2">
+                                <a href="{{ route('rekam_medis.kunjungan_rs.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('rekam_medis.kunjungan_rs.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Kunjungan RS
+                                </a>
+                                <a href="{{ route('rekam_medis.kelengkapan_erm.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('rekam_medis.kelengkapan_erm.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Kelengkapan ERM
+                                </a>
                             </div>
                         </div>
 

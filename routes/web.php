@@ -23,6 +23,7 @@ use App\Http\Controllers\LaboratoriumController;
 use App\Http\Controllers\FarmasiController;
 use App\Http\Controllers\HargaBarangController;
 use App\Http\Controllers\RawatJalanController;
+use App\Http\Controllers\RekamMedisController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -110,4 +111,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/laboratorium/kategori-pasien/reset-settings', [LaboratoriumController::class, 'kategoriPasienResetSettings'])->name('laboratorium.kategori_pasien.reset_settings');
     Route::get('/laboratorium/kategori-pasien/export/excel', [LaboratoriumController::class, 'kategoriPasienExportExcel'])->name('laboratorium.kategori_pasien.export.excel');
     Route::get('/laboratorium/kategori-pasien/export/pdf', [LaboratoriumController::class, 'kategoriPasienExportPdf'])->name('laboratorium.kategori_pasien.export.pdf');
+
+    // Rekam Medis
+    Route::get('/rekam-medis/kunjungan-rs', [RekamMedisController::class, 'kunjunganRs'])->name('rekam_medis.kunjungan_rs.index');
+    Route::get('/rekam-medis/kunjungan-rs/export/excel', [RekamMedisController::class, 'kunjunganRsExportExcel'])->name('rekam_medis.kunjungan_rs.export.excel');
+    Route::get('/rekam-medis/kunjungan-rs/export/pdf', [RekamMedisController::class, 'kunjunganRsExportPdf'])->name('rekam_medis.kunjungan_rs.export.pdf');
+    Route::get('/rekam-medis/kelengkapan-erm', [RekamMedisController::class, 'kelengkapanErm'])->name('rekam_medis.kelengkapan_erm.index');
 });
