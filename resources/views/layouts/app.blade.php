@@ -327,6 +327,34 @@
                                 Modul belum tersedia
                             </div>
                         </div>
+
+                        <!-- Bedah Sentral Menu -->
+                        <div x-data="{ open: {{ request()->routeIs('bedah_sentral.*') ? 'true' : 'false' }} }" class="space-y-1">
+                            <button @click="open = !open"
+                                class="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl hover:bg-white/10 transition text-left">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242 3 3 0 014.242 0L12 12zm0 0L9.121 9.121a3 3 0 10-4.242 4.242 3 3 0 004.242 0L12 12z">
+                                        </path>
+                                    </svg>
+                                    Bedah Sentral
+                                </div>
+                                <svg :class="{'rotate-180': open}" class="w-4 h-4 transition-transform duration-200"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7">
+                                    </path>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-collapse
+                                class="pl-11 pr-4 py-2 space-y-1 text-xs font-medium text-white/80 bg-black/10 rounded-xl mx-2">
+                                <a href="{{ route('bedah_sentral.ok_nst.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('bedah_sentral.ok_nst.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Data OK NST
+                                </a>
+                            </div>
+                        </div>
                     </nav>
 
                     <!-- Sidebar Footer -->

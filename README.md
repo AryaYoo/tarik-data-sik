@@ -12,9 +12,13 @@ Project ini bertujuan untuk menyediakan antarmuka yang intuitif dan cepat bagi s
     - Penerimaan Obat dan BHP Farmasi
     - Pemberian Obat dan BHP
 - **Penarikan Data Laboratorium**:
-    - Waktu Tunggu Hasil Lab Rawat Jalan
-    - Waktu Tunggu Hasil Lab Rawat Inap
-    - Waktu Tunggu Hasil Lab Gabungan
+    - Waktu Tunggu Hasil Lab Rawat Jalan (sumber: `permintaan_lab`)
+    - Waktu Tunggu Hasil Lab Rawat Inap (sumber: `permintaan_lab`)
+    - Waktu Tunggu Hasil Lab Gabungan:
+        - **Waktu Masuk / Sampel**: Diambil dari tabel `permintaan_lab` (`tgl_sampel` & `jam_sampel`).
+        - **Waktu Hasil**: Diambil dari tabel `periksa_lab` (`tgl_periksa` & `jam`).
+        - **Pemeriksaan**: Diambil dari tabel `periksa_lab` yang berelasi ke `jns_perawatan_lab` (`nm_perawatan`).
+        - **Setting Filter Kode Periksa**: Filter penampilan kode periksa yang sama persis dengan modul Kategori Pasien (secara default mengecualikan kode periksa paket internal non-standar seperti `XBPJS`, `LIBI`, dsb., serta dapat dikustomisasi dan di-reset melalui modal setting).
 - **Ekspor Data**: Mendukung ekspor hasil tarikan data ke format **Excel** dan **PDF**.
 - **Dashboard**: Visualisasi ringkas mengenai status penarikan data.
 

@@ -9,19 +9,20 @@ class LaboratoriumRepository
     /**
      * Get query for Laboratory data based on status (ralan/ranap)
      */
-    public function getLabQuery($status, $startDate, $endDate, $kd_pj = null, $ketepatan = null)
+    public function getLabQuery($status, $startDate, $endDate, $kd_pj = null, $ketepatan = null, $kode_periksa_list = null)
     {
+        if ($status === 'gabungan') {
+            return $this->getLabGabunganQuery($startDate, $endDate, $kd_pj, $ketepatan, $kode_periksa_list);
+        }
+
         $query = DB::table('permintaan_lab')
             ->join('reg_periksa', 'permintaan_lab.no_rawat', '=', 'reg_periksa.no_rawat')
             ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
             ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
             ->leftJoin('permintaan_detail_permintaan_lab', 'permintaan_lab.noorder', '=', 'permintaan_detail_permintaan_lab.noorder')
             ->leftJoin('jns_perawatan_lab', 'permintaan_detail_permintaan_lab.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
-            ->whereBetween('permintaan_lab.tgl_sampel', [$startDate, $endDate]);
-
-        if ($status !== 'gabungan') {
-            $query->where('permintaan_lab.status', $status);
-        }
+            ->whereBetween('permintaan_lab.tgl_sampel', [$startDate, $endDate])
+            ->where('permintaan_lab.status', $status);
 
         if ($kd_pj) {
             $query->where('reg_periksa.kd_pj', $kd_pj);
@@ -51,6 +52,90 @@ class LaboratoriumRepository
                 DB::raw("TIMEDIFF(CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil), CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel)) as total_waktu")
             ])
             ->groupBy('permintaan_lab.noorder', 'permintaan_lab.tgl_sampel', 'pasien.nm_pasien', 'pasien.no_rkm_medis', 'permintaan_lab.jam_sampel', 'permintaan_lab.tgl_hasil', 'permintaan_lab.jam_hasil', 'permintaan_lab.no_rawat', 'permintaan_lab.status', 'penjab.png_jawab')
+            ->orderBy('permintaan_lab.tgl_sampel', 'desc')
+            ->orderBy('permintaan_lab.jam_sampel', 'desc');
+    }
+
+    /**
+     * Get query for Laboratory data Gabungan (Ralan & Ranap)
+     *
+     * Arsitektur Query:
+     *  - Tabel penggerak : permintaan_lab (satu baris = satu order pemeriksaan/noorder)
+     *  - Waktu Masuk     : permintaan_lab.tgl_sampel & jam_sampel
+     *  - Kode Periksa    : via permintaan_detail_permintaan_lab (pdpl) — FILTER DITERAPKAN DI SINI
+     *    sehingga jika suatu kode dikecualikan, ORDER tersebut TIDAK MUNCUL SAMA SEKALI
+     *  - Waktu Hasil     : periksa_lab.tgl_periksa & jam (kategori PK), di-join per no_rawat+kd_jenis_prw
+     *  - Pemeriksaan     : GROUP_CONCAT nm_perawatan dari jns_perawatan_lab per noorder
+     */
+    public function getLabGabunganQuery($startDate, $endDate, $kd_pj = null, $ketepatan = null, $kode_periksa_list = null)
+    {
+        $query = DB::table('permintaan_lab')
+            // Link order ke detail kode periksa (satu order bisa punya beberapa kode)
+            ->join('permintaan_detail_permintaan_lab as pdpl', 'permintaan_lab.noorder', '=', 'pdpl.noorder')
+            ->join('jns_perawatan_lab', 'pdpl.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
+            ->join('reg_periksa', 'permintaan_lab.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
+            ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
+            // Join periksa_lab per (no_rawat, kd_jenis_prw) untuk mendapatkan waktu hasil
+            ->leftJoin('periksa_lab', function ($join) {
+                $join->on('periksa_lab.no_rawat', '=', 'permintaan_lab.no_rawat')
+                     ->on('periksa_lab.kd_jenis_prw', '=', 'pdpl.kd_jenis_prw')
+                     ->where('periksa_lab.kategori', 'PK')
+                     ->whereRaw('periksa_lab.tgl_periksa BETWEEN permintaan_lab.tgl_sampel AND DATE_ADD(permintaan_lab.tgl_sampel, INTERVAL 2 DAY)');
+            })
+            ->whereBetween('permintaan_lab.tgl_sampel', [$startDate, $endDate]);
+
+        // ─── Filter Kode Periksa ───────────────────────────────────────────────
+        // Diterapkan pada pdpl.kd_jenis_prw:
+        // Jika kode dikeluarkan → ORDER permintaan_lab tersebut hilang dari hasil
+        if (!empty($kode_periksa_list) && is_array($kode_periksa_list)) {
+            $query->whereIn('pdpl.kd_jenis_prw', $kode_periksa_list);
+        } else {
+            // Default: kecualikan kode paket internal (XBPJS, LIBI, dll)
+            $query->whereNotIn('pdpl.kd_jenis_prw', self::$defaultExcludedKode);
+        }
+
+        if ($kd_pj) {
+            $query->where('reg_periksa.kd_pj', $kd_pj);
+        }
+
+        // Filter ketepatan menggunakan HAVING karena jam_hasil adalah hasil agregasi MAX()
+        if ($ketepatan) {
+            $diffSql = "TIMESTAMPDIFF(SECOND, CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel), CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam)))";
+            if ($ketepatan === 'tepat') {
+                $query->havingRaw("$diffSql < 3600");
+            } elseif ($ketepatan === 'tidak_tepat') {
+                $query->havingRaw("$diffSql >= 3600");
+            }
+        }
+
+        return $query->select([
+                'permintaan_lab.noorder',
+                'permintaan_lab.tgl_sampel',
+                'pasien.nm_pasien',
+                'pasien.no_rkm_medis',
+                'permintaan_lab.jam_sampel',
+                DB::raw('MAX(periksa_lab.tgl_periksa) as tgl_hasil'),
+                DB::raw('MAX(periksa_lab.jam) as jam_hasil'),
+                'permintaan_lab.no_rawat',
+                'permintaan_lab.status',
+                'penjab.png_jawab',
+                DB::raw("GROUP_CONCAT(DISTINCT jns_perawatan_lab.nm_perawatan SEPARATOR ', ') as pemeriksaan"),
+                DB::raw("TIMEDIFF(
+                    CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam)),
+                    CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel)
+                ) as total_waktu"),
+            ])
+            ->groupBy(
+                'permintaan_lab.noorder',
+                'permintaan_lab.tgl_sampel',
+                'pasien.nm_pasien',
+                'pasien.no_rkm_medis',
+                'permintaan_lab.jam_sampel',
+                'permintaan_lab.no_rawat',
+                'permintaan_lab.status',
+                'penjab.png_jawab'
+            )
             ->orderBy('permintaan_lab.tgl_sampel', 'desc')
             ->orderBy('permintaan_lab.jam_sampel', 'desc');
     }
@@ -126,13 +211,13 @@ class LaboratoriumRepository
      */
     public function getKategoriPasienQuery($startDate, $endDate, $kd_pj = null, $kategori_usia = null, $kode_periksa_list = null)
     {
-        $query = DB::table('permintaan_lab')
-            ->join('reg_periksa', 'permintaan_lab.no_rawat', '=', 'reg_periksa.no_rawat')
+        $query = DB::table('periksa_lab')
+            ->join('reg_periksa', 'periksa_lab.no_rawat', '=', 'reg_periksa.no_rawat')
             ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
             ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
-            ->leftJoin('permintaan_detail_permintaan_lab', 'permintaan_lab.noorder', '=', 'permintaan_detail_permintaan_lab.noorder')
-            ->leftJoin('jns_perawatan_lab', 'permintaan_detail_permintaan_lab.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
-            ->whereBetween('permintaan_lab.tgl_sampel', [$startDate, $endDate]);
+            ->leftJoin('jns_perawatan_lab', 'periksa_lab.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
+            ->where('periksa_lab.kategori', 'PK')
+            ->whereBetween('periksa_lab.tgl_periksa', [$startDate, $endDate]);
 
         if ($kd_pj) {
             $query->where('reg_periksa.kd_pj', $kd_pj);
@@ -140,67 +225,66 @@ class LaboratoriumRepository
 
         // Filter berdasarkan kode periksa yang dipilih user (setting kode periksa)
         if (!empty($kode_periksa_list) && is_array($kode_periksa_list)) {
-            $query->whereIn('jns_perawatan_lab.kd_jenis_prw', $kode_periksa_list);
+            $query->whereIn('periksa_lab.kd_jenis_prw', $kode_periksa_list);
         } else {
             // Default: jangan tampilkan kode periksa paket / non-standar (XBPJS, LIBI, dll)
-            $query->whereNotIn('jns_perawatan_lab.kd_jenis_prw', self::$defaultExcludedKode);
+            $query->whereNotIn('periksa_lab.kd_jenis_prw', self::$defaultExcludedKode);
         }
 
-        // Filter berdasarkan kategori usia menggunakan TIMESTAMPDIFF dari tgl_lahir ke tgl_sampel
+        // Filter berdasarkan kategori usia menggunakan TIMESTAMPDIFF dari tgl_lahir ke tgl_periksa
         if ($kategori_usia) {
             switch ($kategori_usia) {
                 case 'neonatus':
                     // < 1 bulan
-                    $query->whereRaw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, permintaan_lab.tgl_sampel) < 1");
+                    $query->whereRaw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, periksa_lab.tgl_periksa) < 1");
                     break;
                 case 'bayi':
                     // 1 – 11 bulan
-                    $query->whereRaw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, permintaan_lab.tgl_sampel) BETWEEN 1 AND 11");
+                    $query->whereRaw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, periksa_lab.tgl_periksa) BETWEEN 1 AND 11");
                     break;
                 case 'anak':
                     // 12 bulan s/d 17 tahun
-                    $query->whereRaw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, permintaan_lab.tgl_sampel) >= 12")
-                          ->whereRaw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, permintaan_lab.tgl_sampel) <= 17");
+                    $query->whereRaw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, periksa_lab.tgl_periksa) >= 12")
+                          ->whereRaw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, periksa_lab.tgl_periksa) <= 17");
                     break;
                 case 'dewasa':
                     // > 17 tahun
-                    $query->whereRaw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, permintaan_lab.tgl_sampel) > 17");
+                    $query->whereRaw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, periksa_lab.tgl_periksa) > 17");
                     break;
             }
         }
 
         return $query->select([
-                'permintaan_lab.noorder',
-                'permintaan_lab.tgl_sampel',
-                'permintaan_lab.no_rawat',
-                'permintaan_lab.status',
+                'periksa_lab.no_rawat',
+                'periksa_lab.tgl_periksa',
+                DB::raw("periksa_lab.tgl_periksa as tgl_sampel"),
+                'periksa_lab.status',
                 'pasien.no_rkm_medis',
                 'pasien.nm_pasien',
                 'pasien.tgl_lahir',
                 'penjab.png_jawab',
-                DB::raw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, permintaan_lab.tgl_sampel) as umur_tahun"),
-                DB::raw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, permintaan_lab.tgl_sampel) as umur_bulan_total"),
+                DB::raw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, periksa_lab.tgl_periksa) as umur_tahun"),
+                DB::raw("TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, periksa_lab.tgl_periksa) as umur_bulan_total"),
                 DB::raw("GROUP_CONCAT(DISTINCT jns_perawatan_lab.nm_perawatan ORDER BY jns_perawatan_lab.nm_perawatan SEPARATOR ', ') as pemeriksaan"),
                 DB::raw("
                     CASE
-                        WHEN TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, permintaan_lab.tgl_sampel) < 1 THEN 'Neonatus'
-                        WHEN TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, permintaan_lab.tgl_sampel) BETWEEN 1 AND 11 THEN 'Bayi'
-                        WHEN TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, permintaan_lab.tgl_sampel) BETWEEN 1 AND 17 THEN 'Anak'
+                        WHEN TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, periksa_lab.tgl_periksa) < 1 THEN 'Neonatus'
+                        WHEN TIMESTAMPDIFF(MONTH, pasien.tgl_lahir, periksa_lab.tgl_periksa) BETWEEN 1 AND 11 THEN 'Bayi'
+                        WHEN TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, periksa_lab.tgl_periksa) BETWEEN 1 AND 17 THEN 'Anak'
                         ELSE 'Dewasa'
                     END as kategori_usia
                 "),
             ])
             ->groupBy(
-                'permintaan_lab.noorder',
-                'permintaan_lab.tgl_sampel',
-                'permintaan_lab.no_rawat',
-                'permintaan_lab.status',
+                'periksa_lab.no_rawat',
+                'periksa_lab.tgl_periksa',
+                'periksa_lab.status',
                 'pasien.no_rkm_medis',
                 'pasien.nm_pasien',
                 'pasien.tgl_lahir',
                 'penjab.png_jawab'
             )
-            ->orderBy('permintaan_lab.tgl_sampel', 'desc')
+            ->orderBy('periksa_lab.tgl_periksa', 'desc')
             ->orderBy('pasien.nm_pasien', 'asc');
     }
 

@@ -212,9 +212,9 @@
                                         $umurTeks = $umurBulan . ' Bulan';
                                     } else {
                                         // Hitung hari jika < 1 bulan
-                                        $tglLahir  = \Carbon\Carbon::parse($item->tgl_lahir);
-                                        $tglSampel = \Carbon\Carbon::parse($item->tgl_sampel);
-                                        $umurTeks  = $tglLahir->diffInDays($tglSampel) . ' Hari';
+                                        $tglLahir   = \Carbon\Carbon::parse($item->tgl_lahir);
+                                        $tglPeriksa = \Carbon\Carbon::parse($item->tgl_periksa ?? $item->tgl_sampel);
+                                        $umurTeks   = $tglLahir->diffInDays($tglPeriksa) . ' Hari';
                                     }
                                 @endphp
                                 <tr class="hover:bg-gray-50/30 transition-colors">
@@ -232,10 +232,10 @@
                                     </td>
                                     <td class="px-6 py-5">
                                         <div class="text-sm font-black text-gray-700">
-                                            {{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}
+                                            {{ \Carbon\Carbon::parse($item->tgl_periksa ?? $item->tgl_sampel)->format('d/m/Y') }}
                                         </div>
                                         <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                                            {{ $item->status == 'ralan' ? 'Rawat Jalan' : 'Rawat Inap' }}
+                                            {{ strtolower($item->status) == 'ralan' ? 'Rawat Jalan' : 'Rawat Inap' }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-5 text-center">
@@ -534,9 +534,9 @@
                                     <tbody class="divide-y divide-gray-50">
                                         <tr>
                                             <td class="p-2 font-semibold text-gray-700">Tgl. Pemeriksaan</td>
-                                            <td class="p-2 font-mono text-primary">permintaan_lab</td>
-                                            <td class="p-2 font-mono text-primary">tgl_sampel</td>
-                                            <td class="p-2 text-gray-600">Tanggal sampel lab diambil. Digunakan sebagai acuan tanggal pemeriksaan.</td>
+                                            <td class="p-2 font-mono text-primary">periksa_lab</td>
+                                            <td class="p-2 font-mono text-primary">tgl_periksa</td>
+                                            <td class="p-2 text-gray-600">Tanggal periksa lab PK dilakukan. Digunakan sebagai acuan tanggal pemeriksaan.</td>
                                         </tr>
                                         <tr>
                                             <td class="p-2 font-semibold text-gray-700">No. RM</td>
@@ -554,7 +554,7 @@
                                             <td class="p-2 font-semibold text-gray-700">Umur & Kategori</td>
                                             <td class="p-2 font-mono text-primary">pasien</td>
                                             <td class="p-2 font-mono text-primary">tgl_lahir</td>
-                                            <td class="p-2 text-gray-600">Dihitung: <code class="text-red-600 font-bold">TIMESTAMPDIFF(YEAR/MONTH, tgl_lahir, tgl_sampel)</code></td>
+                                            <td class="p-2 text-gray-600">Dihitung: <code class="text-red-600 font-bold">TIMESTAMPDIFF(YEAR/MONTH, tgl_lahir, periksa_lab.tgl_periksa)</code></td>
                                         </tr>
                                         <tr>
                                             <td class="p-2 font-semibold text-gray-700">Jenis Pemeriksaan</td>

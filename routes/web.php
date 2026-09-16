@@ -24,6 +24,7 @@ use App\Http\Controllers\FarmasiController;
 use App\Http\Controllers\HargaBarangController;
 use App\Http\Controllers\RawatJalanController;
 use App\Http\Controllers\RekamMedisController;
+use App\Http\Controllers\BedahSentralController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -103,6 +104,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/laboratorium-ralan', [LaboratoriumController::class, 'index'])->name('laboratorium.index');
     Route::get('/laboratorium-ranap', [LaboratoriumController::class, 'index_ranap'])->name('laboratorium.index_ranap');
     Route::get('/laboratorium-gabungan', [LaboratoriumController::class, 'index_gabungan'])->name('laboratorium.index_gabungan');
+    Route::post('/laboratorium-gabungan/save-settings', [LaboratoriumController::class, 'gabunganSaveSettings'])->name('laboratorium.gabungan.save_settings');
+    Route::post('/laboratorium-gabungan/reset-settings', [LaboratoriumController::class, 'gabunganResetSettings'])->name('laboratorium.gabungan.reset_settings');
     Route::get('/laboratorium/export/excel', [LaboratoriumController::class, 'exportExcel'])->name('laboratorium.export.excel');
     Route::get('/laboratorium/export/pdf', [LaboratoriumController::class, 'exportPdf'])->name('laboratorium.export.pdf');
     Route::get('/laboratorium/kategori-pasien', [LaboratoriumController::class, 'kategoriPasien'])->name('laboratorium.kategori_pasien.index');
@@ -117,4 +120,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rekam-medis/kunjungan-rs/export/excel', [RekamMedisController::class, 'kunjunganRsExportExcel'])->name('rekam_medis.kunjungan_rs.export.excel');
     Route::get('/rekam-medis/kunjungan-rs/export/pdf', [RekamMedisController::class, 'kunjunganRsExportPdf'])->name('rekam_medis.kunjungan_rs.export.pdf');
     Route::get('/rekam-medis/kelengkapan-erm', [RekamMedisController::class, 'kelengkapanErm'])->name('rekam_medis.kelengkapan_erm.index');
+
+    // Bedah Sentral
+    Route::get('/bedah-sentral/ok-nst', [BedahSentralController::class, 'okNst'])->name('bedah_sentral.ok_nst.index');
+    Route::get('/bedah-sentral/ok-nst/export/excel', [BedahSentralController::class, 'okNstExportExcel'])->name('bedah_sentral.ok_nst.export.excel');
+    Route::get('/bedah-sentral/ok-nst/export/pdf', [BedahSentralController::class, 'okNstExportPdf'])->name('bedah_sentral.ok_nst.export.pdf');
 });

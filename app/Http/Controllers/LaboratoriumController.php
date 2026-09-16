@@ -74,7 +74,18 @@ class LaboratoriumController extends Controller
         $kd_pj = $request->kd_pj;
         $ketepatan = $request->ketepatan;
 
-        $penjabs = DB::table('penjab')->select('kd_pj', 'png_jawab')->orderBy('png_jawab', 'asc')->get();
+        // Ambil filter kode periksa dari session (jika user pernah custom setting)
+        $session_kode = session('lab_gabungan_selected_kode', null);
+        if (is_array($session_kode) && count($session_kode) === 0) {
+            session()->forget('lab_gabungan_selected_kode');
+            $session_kode = null;
+        }
+
+        $filter_kode_aktif = !is_null($session_kode);
+        $kode_periksa_list = $session_kode;
+
+        $penjabs       = DB::table('penjab')->select('kd_pj', 'png_jawab')->orderBy('png_jawab', 'asc')->get();
+        $availableKode = $this->labRepository->getAvailableKodePeriksa();
 
         $data = null;
         if ($request->has('tgl_mulai')) {
@@ -85,11 +96,37 @@ class LaboratoriumController extends Controller
                 'extraction_type' => 'Lab Gabungan',
             ]);
 
-            $data = $this->labRepository->getLabQuery('gabungan', $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan)->paginate(20);
-            $data->appends($request->all());
+            $data = $this->labRepository->getLabQuery('gabungan', $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list)->paginate(20);
+            $data->appends($request->except('kode_periksa'));
         }
 
-        return view('laboratorium.gabungan.index', compact('data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'ketepatan'));
+        return view('laboratorium.gabungan.index', compact(
+            'data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'ketepatan',
+            'availableKode', 'filter_kode_aktif', 'session_kode'
+        ));
+    }
+
+    /**
+     * AJAX POST: Simpan filter kode periksa gabungan ke dalam session
+     */
+    public function gabunganSaveSettings(Request $request)
+    {
+        $kode = $request->input('kode', []);
+        if (empty($kode)) {
+            session()->forget('lab_gabungan_selected_kode');
+            return response()->json(['success' => true, 'count' => 0, 'reset' => true]);
+        }
+        session(['lab_gabungan_selected_kode' => $kode]);
+        return response()->json(['success' => true, 'count' => count($kode)]);
+    }
+
+    /**
+     * AJAX POST: Reset filter kode periksa gabungan ke default (hapus dari session)
+     */
+    public function gabunganResetSettings(Request $request)
+    {
+        session()->forget('lab_gabungan_selected_kode');
+        return response()->json(['success' => true]);
     }
 
     public function exportExcel(Request $request)
@@ -100,7 +137,9 @@ class LaboratoriumController extends Controller
         $kd_pj = $request->kd_pj;
         $ketepatan = $request->ketepatan;
 
-        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan)->get();
+        $kode_periksa_list = $type === 'gabungan' ? session('lab_gabungan_selected_kode', null) : null;
+
+        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list)->get();
 
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\LaboratoriumExport($data, strtoupper($type)), 'waktu-tunggu-lab-' . $type . '-' . now()->format('Y-m-d') . '.xlsx');
     }
@@ -113,7 +152,9 @@ class LaboratoriumController extends Controller
         $kd_pj = $request->kd_pj;
         $ketepatan = $request->ketepatan;
 
-        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan)->get();
+        $kode_periksa_list = $type === 'gabungan' ? session('lab_gabungan_selected_kode', null) : null;
+
+        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list)->get();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView("laboratorium.$type.pdf", compact('data', 'tgl_mulai', 'tgl_selesai'));
         return $pdf->download('waktu-tunggu-lab-' . $type . '-' . now()->format('Y-m-d') . '.pdf');

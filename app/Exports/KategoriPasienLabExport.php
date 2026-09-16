@@ -121,21 +121,24 @@ class KategoriPasienLabExport implements FromCollection, WithHeadings, WithMappi
         } elseif ($umurBulanTotal >= 1) {
             $umurTeks = $umurBulanTotal . ' Bulan';
         } else {
-            $hari     = Carbon::parse($row->tgl_lahir)->diffInDays(Carbon::parse($row->tgl_sampel));
-            $umurTeks = $hari . ' Hari';
+            $tglPeriksa = $row->tgl_periksa ?? $row->tgl_sampel;
+            $hari       = Carbon::parse($row->tgl_lahir)->diffInDays(Carbon::parse($tglPeriksa));
+            $umurTeks   = $hari . ' Hari';
         }
+
+        $tglPemeriksaan = $row->tgl_periksa ?? $row->tgl_sampel;
 
         return [
             $row->patient_no,
             $row->no_rkm_medis,
             strtoupper($row->nm_pasien),
             $row->tgl_lahir ? Carbon::parse($row->tgl_lahir)->format('d/m/Y') : '-',
-            Carbon::parse($row->tgl_sampel)->format('d/m/Y'),
+            Carbon::parse($tglPemeriksaan)->format('d/m/Y'),
             $umurTeks,
             $row->kategori_usia,
             $row->pemeriksaan ?: '-',
             $row->png_jawab,
-            $row->status == 'ralan' ? 'Rawat Jalan' : 'Rawat Inap',
+            strtolower($row->status) == 'ralan' ? 'Rawat Jalan' : 'Rawat Inap',
         ];
     }
 

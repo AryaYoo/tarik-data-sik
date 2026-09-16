@@ -143,8 +143,9 @@
                         } elseif ($umurBulanTotal >= 1) {
                             $umurTeks = $umurBulanTotal . ' Bln';
                         } else {
-                            $hari     = \Carbon\Carbon::parse($item->tgl_lahir)->diffInDays(\Carbon\Carbon::parse($item->tgl_sampel));
-                            $umurTeks = $hari . ' Hr';
+                            $tglPeriksa = $item->tgl_periksa ?? $item->tgl_sampel;
+                            $hari       = \Carbon\Carbon::parse($item->tgl_lahir)->diffInDays(\Carbon\Carbon::parse($tglPeriksa));
+                            $umurTeks   = $hari . ' Hr';
                         }
 
                         $katClass = match($item->kategori_usia) {
@@ -162,12 +163,12 @@
                             <td class="text-center" rowspan="{{ $rowCount }}" style="vertical-align: middle;">{{ $item->tgl_lahir ? \Carbon\Carbon::parse($item->tgl_lahir)->format('d/m/Y') : '-' }}</td>
                         @endif
 
-                        <td>{{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($item->tgl_periksa ?? $item->tgl_sampel)->format('d/m/Y') }}</td>
                         <td class="text-center">{{ $umurTeks }}</td>
                         <td class="text-center"><span class="{{ $katClass }}">{{ $item->kategori_usia }}</span></td>
                         <td style="font-size:9px;">{{ $item->pemeriksaan ?: '-' }}</td>
                         <td>{{ $item->png_jawab }}</td>
-                        <td class="text-center">{{ $item->status == 'ralan' ? 'Ralan' : 'Ranap' }}</td>
+                        <td class="text-center">{{ strtolower($item->status) == 'ralan' ? 'Ralan' : 'Ranap' }}</td>
                     </tr>
                 @endforeach
                 @php $patientNo++; @endphp
