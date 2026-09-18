@@ -24,7 +24,8 @@ class BedahSentralController extends Controller
      */
     public function okNst(Request $request)
     {
-        $data = null;
+        $data       = null;
+        $nstSummary = collect();
 
         if ($request->has('tgl_mulai') && $request->has('tgl_selesai')) {
             $request->validate([
@@ -47,9 +48,16 @@ class BedahSentralController extends Controller
             )->paginate(15);
 
             $data->appends($request->all());
+
+            // Summary jumlah kasus per kategori NST (untuk card ringkasan)
+            $nstSummary = $this->bedahSentralRepository->getDataOkNstSummary(
+                $request->tgl_mulai,
+                $request->tgl_selesai,
+                $request->status_operasi
+            );
         }
 
-        return view('bedah_sentral.ok_nst.index', compact('data'));
+        return view('bedah_sentral.ok_nst.index', compact('data', 'nstSummary'));
     }
 
     /**

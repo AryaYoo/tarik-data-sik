@@ -126,6 +126,10 @@ class LaboratoriumRepository
                     CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel)
                 ) as total_waktu"),
             ])
+            // Hanya tampilkan order yang sudah benar-benar selesai diperiksa
+            // (ada record di periksa_lab). Order yang belum ada hasilnya di-exclude
+            // agar tidak tampil sebagai "Tepat Waktu 0 detik" yang menyesatkan.
+            ->havingRaw('MAX(periksa_lab.tgl_periksa) IS NOT NULL')
             ->groupBy(
                 'permintaan_lab.noorder',
                 'permintaan_lab.tgl_sampel',

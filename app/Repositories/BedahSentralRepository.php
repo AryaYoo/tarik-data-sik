@@ -150,4 +150,86 @@ class BedahSentralRepository
             ->orderBy('tgl_operasi', 'desc')
             ->orderBy('jam_mulai', 'asc');
     }
+
+    /**
+     * Hitung jumlah kasus per kategori / kode NST untuk periode tertentu.
+     * Digunakan untuk menampilkan ringkasan kategori pada halaman Data OK NST.
+     *
+     * Mengembalikan collection of objects dengan properti:
+     *   - kode_diagnosa  : kode ICD-10 / ICD-9 CM
+     *   - nama_diagnosa  : nama/deskripsi singkat diagnosa
+     *   - tipe_nst       : 'ICD-10 (Indikasi)' | 'ICD-9 CM (Prosedur)'
+     *   - jumlah         : jumlah kasus pada periode
+     *
+     * @param string      $startDate
+     * @param string      $endDate
+     * @param string|null $status_operasi
+     * @return \Illuminate\Support\Collection
+     */
+    public function getDataOkNstSummary($startDate, $endDate, $status_operasi = null)
+    {
+        // ── Bagian ICD-10 ──────────────────────────────────────────────────────
+        $icd10 = DB::table('booking_operasi')
+            ->join('reg_periksa', 'booking_operasi.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('diagnosa_pasien', 'booking_operasi.no_rawat', '=', 'diagnosa_pasien.no_rawat')
+            ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
+            ->whereBetween('booking_operasi.tanggal', [$startDate, $endDate])
+            ->where(function ($q) {
+                $q->where('penyakit.kd_penyakit', 'LIKE', 'O68%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', '068%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', 'O36.8%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', '036.8%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', 'O36.3%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', '036.3%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', 'O41.0%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', '041.0%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', 'O48%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', '048%')
+                  ->orWhere('penyakit.kd_penyakit', 'LIKE', 'Z35%')
+                  ->orWhere('penyakit.nm_penyakit', 'LIKE', '%NST%')
+                  ->orWhere('penyakit.nm_penyakit', 'LIKE', '%Non Stress Test%')
+                  ->orWhere('penyakit.nm_penyakit', 'LIKE', '%Fetal Distress%')
+                  ->orWhere('penyakit.nm_penyakit', 'LIKE', '%Gawat Janin%');
+            });
+
+        if (!empty($status_operasi)) {
+            $icd10->where('booking_operasi.status', $status_operasi);
+        }
+
+        $icd10->select([
+            'penyakit.kd_penyakit as kode_diagnosa',
+            'penyakit.nm_penyakit as nama_diagnosa',
+            DB::raw("'ICD-10 (Indikasi)' as tipe_nst"),
+            DB::raw('COUNT(*) as jumlah'),
+        ])->groupBy('penyakit.kd_penyakit', 'penyakit.nm_penyakit');
+
+        // ── Bagian ICD-9 CM ────────────────────────────────────────────────────
+        $icd9 = DB::table('booking_operasi')
+            ->join('reg_periksa', 'booking_operasi.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('prosedur_pasien', 'booking_operasi.no_rawat', '=', 'prosedur_pasien.no_rawat')
+            ->join('icd9', 'prosedur_pasien.kode', '=', 'icd9.kode')
+            ->whereBetween('booking_operasi.tanggal', [$startDate, $endDate])
+            ->where(function ($q) {
+                $q->where('icd9.kode', 'LIKE', '75.34%')
+                  ->orWhere('icd9.kode', 'LIKE', '75.3%')
+                  ->orWhere('icd9.deskripsi_panjang', 'LIKE', '%fetal monitoring%')
+                  ->orWhere('icd9.deskripsi_panjang', 'LIKE', '%NST%');
+            });
+
+        if (!empty($status_operasi)) {
+            $icd9->where('booking_operasi.status', $status_operasi);
+        }
+
+        $icd9->select([
+            'icd9.kode as kode_diagnosa',
+            DB::raw("COALESCE(icd9.deskripsi_panjang, icd9.deskripsi_pendek) as nama_diagnosa"),
+            DB::raw("'ICD-9 CM (Prosedur)' as tipe_nst"),
+            DB::raw('COUNT(*) as jumlah'),
+        ])->groupBy('icd9.kode', 'icd9.deskripsi_panjang', 'icd9.deskripsi_pendek');
+
+        // UNION kedua query lalu urutkan berdasarkan jumlah terbanyak
+        return $icd10->union($icd9)
+            ->orderBy('jumlah', 'desc')
+            ->get();
+    }
 }

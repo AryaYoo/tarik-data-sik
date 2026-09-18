@@ -109,7 +109,67 @@
                 </div>
             </div>
 
-            <!-- Table Section -->
+            <!-- NST Category Summary Cards -->
+            @if($nstSummary->isNotEmpty())
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                    <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest">Ringkasan per Kategori NST</h3>
+                    <span class="ml-auto text-[10px] font-black text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">{{ $nstSummary->count() }} kategori</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <div class="flex gap-4 p-5 min-w-max">
+                        @foreach($nstSummary as $index => $item)
+                        <div class="bg-white border border-gray-100 rounded-2xl p-5 min-w-[180px] flex flex-col relative overflow-hidden group hover:shadow-md hover:border-primary/20 transition-all duration-300 shadow-sm">
+                            {{-- Watermark icon --}}
+                            <div class="absolute -right-3 -bottom-3 opacity-[0.04] group-hover:opacity-[0.07] group-hover:scale-110 transition-all duration-500">
+                                <svg class="w-20 h-20 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+                                </svg>
+                            </div>
+
+                            {{-- Rank badge + Tipe NST --}}
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm shadow-inner flex-shrink-0
+                                    @if($index == 0) bg-yellow-100 text-yellow-600
+                                    @elseif($index == 1) bg-gray-100 text-gray-500
+                                    @elseif($index == 2) bg-orange-100 text-orange-600
+                                    @else bg-primary/10 text-primary
+                                    @endif">
+                                    {{ $index + 1 }}
+                                </div>
+                                @if($item->tipe_nst === 'ICD-9 CM (Prosedur)')
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-700 uppercase tracking-wider flex-shrink-0">ICD-9</span>
+                                @else
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-700 uppercase tracking-wider flex-shrink-0">ICD-10</span>
+                                @endif
+                            </div>
+
+                            {{-- Kode diagnosa --}}
+                            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Kode</div>
+                            <div class="text-sm font-black text-gray-800 font-mono mb-1">{{ $item->kode_diagnosa }}</div>
+
+                            {{-- Nama diagnosa --}}
+                            <div class="text-[10px] font-medium text-gray-500 leading-tight line-clamp-2 mb-4 flex-1"
+                                 title="{{ $item->nama_diagnosa }}">
+                                {{ Str::limit($item->nama_diagnosa, 60) }}
+                            </div>
+
+                            {{-- Jumlah kasus --}}
+                            <div class="flex items-end justify-between mt-auto">
+                                <span class="text-2xl font-black text-primary tracking-tighter">{{ $item->jumlah }}</span>
+                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-1 rounded-lg">KASUS</span>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            @endif
+
+
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
