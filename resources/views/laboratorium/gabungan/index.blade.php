@@ -94,6 +94,70 @@
         </div>
 
         @if($data)
+            {{-- Summary Indicator Cards --}}
+            @if(!empty($summary_gabungan))
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {{-- Total Permintaan --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-1 col-span-2 md:col-span-1">
+                    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Permintaan</div>
+                    <div class="text-3xl font-black text-gray-800">{{ number_format($summary_gabungan['total'] ?? 0) }}</div>
+                    <div class="text-xs text-gray-400 font-medium">Semua Pemeriksaan</div>
+                </div>
+                {{-- Tepat Waktu --}}
+                <div class="bg-primary/5 border border-primary/15 rounded-2xl p-5 flex flex-col gap-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-[10px] font-black text-primary uppercase tracking-widest">Tepat Waktu</div>
+                        <span class="text-[9px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">&lt; 60 Menit</span>
+                    </div>
+                    <div class="text-3xl font-black text-primary">{{ number_format($summary_gabungan['tepat'] ?? 0) }}</div>
+                    @if(($summary_gabungan['total'] ?? 0) > 0)
+                    <div class="text-xs text-primary/70 font-medium">{{ number_format((($summary_gabungan['tepat'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
+                    @else
+                    <div class="text-xs text-primary/70 font-medium">0% dari total</div>
+                    @endif
+                </div>
+                {{-- Tidak Sesuai --}}
+                <div class="bg-rose-50 border border-rose-100 rounded-2xl p-5 flex flex-col gap-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-[10px] font-black text-rose-500 uppercase tracking-widest">Tidak Sesuai</div>
+                        <span class="text-[9px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full">&ge; 60 Menit</span>
+                    </div>
+                    <div class="text-3xl font-black text-rose-600">{{ number_format($summary_gabungan['tidak_tepat'] ?? 0) }}</div>
+                    @if(($summary_gabungan['total'] ?? 0) > 0)
+                    <div class="text-xs text-rose-400 font-medium">{{ number_format((($summary_gabungan['tidak_tepat'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
+                    @else
+                    <div class="text-xs text-rose-400 font-medium">0% dari total</div>
+                    @endif
+                </div>
+                {{-- Rawat Jalan --}}
+                <div class="bg-sky-50 border border-sky-100 rounded-2xl p-5 flex flex-col gap-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-[10px] font-black text-sky-500 uppercase tracking-widest">Rawat Jalan</div>
+                        <span class="text-[9px] font-black text-sky-600 bg-sky-100 px-2 py-0.5 rounded-full">Ralan</span>
+                    </div>
+                    <div class="text-3xl font-black text-sky-700">{{ number_format($summary_gabungan['ralan'] ?? 0) }}</div>
+                    @if(($summary_gabungan['total'] ?? 0) > 0)
+                    <div class="text-xs text-sky-400 font-medium">{{ number_format((($summary_gabungan['ralan'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
+                    @else
+                    <div class="text-xs text-sky-400 font-medium">0% dari total</div>
+                    @endif
+                </div>
+                {{-- Rawat Inap --}}
+                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 flex flex-col gap-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Rawat Inap</div>
+                        <span class="text-[9px] font-black text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">Ranap</span>
+                    </div>
+                    <div class="text-3xl font-black text-indigo-700">{{ number_format($summary_gabungan['ranap'] ?? 0) }}</div>
+                    @if(($summary_gabungan['total'] ?? 0) > 0)
+                    <div class="text-xs text-indigo-400 font-medium">{{ number_format((($summary_gabungan['ranap'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
+                    @else
+                    <div class="text-xs text-indigo-400 font-medium">0% dari total</div>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             <!-- Export Section -->
             <div class="flex items-center gap-4">
                 <a href="javascript:void(0)" 

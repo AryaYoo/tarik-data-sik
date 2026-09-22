@@ -88,6 +88,7 @@ class LaboratoriumController extends Controller
         $availableKode = $this->labRepository->getAvailableKodePeriksa();
 
         $data = null;
+        $summary_gabungan = [];
         if ($request->has('tgl_mulai')) {
             // Log the extraction
             ExtractionLog::create([
@@ -98,11 +99,40 @@ class LaboratoriumController extends Controller
 
             $data = $this->labRepository->getLabQuery('gabungan', $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list)->paginate(20);
             $data->appends($request->except('kode_periksa'));
+
+            // Hitung summary indikator (tanpa filter ketepatan agar total selalu mencerminkan semua data)
+            $allRecords = $this->labRepository
+                ->getLabGabunganQuery($tgl_mulai, $tgl_selesai, $kd_pj, null, $kode_periksa_list)
+                ->get();
+
+            $tepatCount = $allRecords->filter(function ($item) {
+                if (empty($item->total_waktu) || empty($item->jam_hasil)) {
+                    return false;
+                }
+                $parts       = explode(':', $item->total_waktu ?? '');
+                $totalSeconds = ((int)($parts[0] ?? 0) * 3600)
+                              + ((int)($parts[1] ?? 0) * 60)
+                              + (int)($parts[2] ?? 0);
+                return $totalSeconds > 0 && $totalSeconds < 3600;
+            })->count();
+
+            $totalCount = $allRecords->count();
+            $tidakTepatCount = $totalCount - $tepatCount;
+            $ralanCount = $allRecords->where('status', 'ralan')->count();
+            $ranapCount = $allRecords->where('status', 'ranap')->count();
+
+            $summary_gabungan = [
+                'total'       => $totalCount,
+                'tepat'       => $tepatCount,
+                'tidak_tepat' => $tidakTepatCount,
+                'ralan'       => $ralanCount,
+                'ranap'       => $ranapCount,
+            ];
         }
 
         return view('laboratorium.gabungan.index', compact(
             'data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'ketepatan',
-            'availableKode', 'filter_kode_aktif', 'session_kode'
+            'availableKode', 'filter_kode_aktif', 'session_kode', 'summary_gabungan'
         ));
     }
 
