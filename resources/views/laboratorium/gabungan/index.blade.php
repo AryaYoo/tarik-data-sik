@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- Alpine.js root — mengatur setting kode periksa via session --}}
+    {{-- Alpine.js root --}}
     <div class="space-y-6"
          x-data="kodePeriksaSetting()"
          x-init="init()">
@@ -11,14 +11,14 @@
             <div class="flex items-center gap-3">
                 <div>
                     <div class="flex items-center gap-2">
-                        <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Waktu Tunggu Hasil Lab - Gabungan</h2>
+                        <h2 class="text-2xl font-bold text-gray-800 uppercase tracking-tighter italic">Data Lama Pelayanan Laboratorium Patologi Klinis</h2>
                         <button type="button" onclick="openInfoModal()" class="text-primary hover:text-green-800 transition duration-150 focus:outline-none" title="Informasi Formula & Sumber Data">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </button>
                     </div>
-                    <p class="text-gray-500 text-sm mt-1">Monitoring durasi penyelesaian hasil pemeriksaan laboratorium pasien ralan & ranap.</p>
+                    <p class="text-gray-500 text-sm mt-1">Monitoring durasi waktu pelayanan dari Jam Permintaan, Jam Sampel, hingga Jam Hasil Hasil Selesai (Waktu Tunggu Gabungan).</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-3">
@@ -29,7 +29,7 @@
                     <span>Real-time Data</span>
                 </div>
 
-                {{-- Tombol Setting Kode Periksa (di sebelah kanan Real-time Data) --}}
+                {{-- Tombol Setting Kode Periksa --}}
                 <div class="flex items-center gap-2">
                     <button type="button" @click="openSettingModal()" onclick="openSettingModal()"
                         class="flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-lg border transition cursor-pointer shadow-sm hover:shadow"
@@ -53,7 +53,7 @@
 
         <!-- Filter Card -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <form id="filterForm" action="{{ route('laboratorium.index_gabungan') }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <form id="filterForm" action="{{ route('laboratorium.index_gabungan') }}" method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Mulai</label>
                     <input type="date" name="tgl_mulai" value="{{ $tgl_mulai }}" 
@@ -74,12 +74,17 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Ketepatan</label>
-                    <select name="ketepatan" class="w-full px-4 py-3 rounded-xl bg-gray-50 border-0 focus:bg-white focus:ring-4 focus:ring-primary/10 transition outline-none text-gray-800 shadow-inner text-sm">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Status Kunjungan</label>
+                    <select name="status" class="w-full px-4 py-3 rounded-xl bg-gray-50 border-0 focus:bg-white focus:ring-4 focus:ring-primary/10 transition outline-none text-gray-800 shadow-inner text-sm">
                         <option value="">-- Semua --</option>
-                        <option value="tepat" {{ $ketepatan == 'tepat' ? 'selected' : '' }}>Tepat Waktu</option>
-                        <option value="tidak_tepat" {{ $ketepatan == 'tidak_tepat' ? 'selected' : '' }}>Tidak Sesuai</option>
+                        <option value="Ralan" {{ $status == 'Ralan' ? 'selected' : '' }}>Rawat Jalan</option>
+                        <option value="Ranap" {{ $status == 'Ranap' ? 'selected' : '' }}>Rawat Inap</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Cari Keyword</label>
+                    <input type="text" name="search" value="{{ $search }}" placeholder="No Order/RM/Nama..."
+                        class="w-full px-4 py-3 rounded-xl bg-gray-50 border-0 focus:bg-white focus:ring-4 focus:ring-primary/10 transition outline-none text-gray-800 shadow-inner text-sm">
                 </div>
                 <div>
                     <button type="submit" 
@@ -94,66 +99,109 @@
         </div>
 
         @if($data)
-            {{-- Summary Indicator Cards --}}
+            {{-- Summary Indicator & Rata-rata Cards --}}
             @if(!empty($summary_gabungan))
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {{-- Total Permintaan --}}
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-1 col-span-2 md:col-span-1">
-                    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Permintaan</div>
-                    <div class="text-3xl font-black text-gray-800">{{ number_format($summary_gabungan['total'] ?? 0) }}</div>
-                    <div class="text-xs text-gray-400 font-medium">Semua Pemeriksaan</div>
-                </div>
-                {{-- Tepat Waktu --}}
-                <div class="bg-primary/5 border border-primary/15 rounded-2xl p-5 flex flex-col gap-1">
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="text-[10px] font-black text-primary uppercase tracking-widest">Tepat Waktu</div>
-                        <span class="text-[9px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">&lt; 60 Menit</span>
+            <div class="space-y-4">
+                {{-- Top 5 Metric Cards --}}
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {{-- Total Order --}}
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-1 col-span-2 md:col-span-1">
+                        <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Order</div>
+                        <div class="text-3xl font-black text-gray-800">{{ number_format($summary_gabungan['total'] ?? 0) }}</div>
+                        <div class="text-xs text-gray-400 font-medium">Permintaan Lab</div>
                     </div>
-                    <div class="text-3xl font-black text-primary">{{ number_format($summary_gabungan['tepat'] ?? 0) }}</div>
-                    @if(($summary_gabungan['total'] ?? 0) > 0)
-                    <div class="text-xs text-primary/70 font-medium">{{ number_format((($summary_gabungan['tepat'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
-                    @else
-                    <div class="text-xs text-primary/70 font-medium">0% dari total</div>
-                    @endif
-                </div>
-                {{-- Tidak Sesuai --}}
-                <div class="bg-rose-50 border border-rose-100 rounded-2xl p-5 flex flex-col gap-1">
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="text-[10px] font-black text-rose-500 uppercase tracking-widest">Tidak Sesuai</div>
-                        <span class="text-[9px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full">&ge; 60 Menit</span>
+                    {{-- Rata-rata Permintaan -> Sampel --}}
+                    <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5 flex flex-col gap-1">
+                        <div class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Rata-rata P - S</div>
+                        <div class="text-3xl font-black text-amber-700">{{ number_format($summary_gabungan['ps_avg'] ?? 0, 2) }} <span class="text-sm font-bold">mnt</span></div>
+                        <div class="text-xs text-amber-600/80 font-medium">Permintaan &rarr; Sampel</div>
                     </div>
-                    <div class="text-3xl font-black text-rose-600">{{ number_format($summary_gabungan['tidak_tepat'] ?? 0) }}</div>
-                    @if(($summary_gabungan['total'] ?? 0) > 0)
-                    <div class="text-xs text-rose-400 font-medium">{{ number_format((($summary_gabungan['tidak_tepat'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
-                    @else
-                    <div class="text-xs text-rose-400 font-medium">0% dari total</div>
-                    @endif
-                </div>
-                {{-- Rawat Jalan --}}
-                <div class="bg-sky-50 border border-sky-100 rounded-2xl p-5 flex flex-col gap-1">
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="text-[10px] font-black text-sky-500 uppercase tracking-widest">Rawat Jalan</div>
-                        <span class="text-[9px] font-black text-sky-600 bg-sky-100 px-2 py-0.5 rounded-full">Ralan</span>
+                    {{-- Rata-rata Sampel -> Hasil --}}
+                    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex flex-col gap-1">
+                        <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Rata-rata S - H</div>
+                        <div class="text-3xl font-black text-blue-700">{{ number_format($summary_gabungan['sh_avg'] ?? 0, 2) }} <span class="text-sm font-bold">mnt</span></div>
+                        <div class="text-xs text-blue-600/80 font-medium">Sampel &rarr; Hasil</div>
                     </div>
-                    <div class="text-3xl font-black text-sky-700">{{ number_format($summary_gabungan['ralan'] ?? 0) }}</div>
-                    @if(($summary_gabungan['total'] ?? 0) > 0)
-                    <div class="text-xs text-sky-400 font-medium">{{ number_format((($summary_gabungan['ralan'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
-                    @else
-                    <div class="text-xs text-sky-400 font-medium">0% dari total</div>
-                    @endif
-                </div>
-                {{-- Rawat Inap --}}
-                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 flex flex-col gap-1">
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Rawat Inap</div>
-                        <span class="text-[9px] font-black text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">Ranap</span>
+                    {{-- Rata-rata Permintaan -> Hasil --}}
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 flex flex-col gap-1">
+                        <div class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Rata-rata P - H</div>
+                        <div class="text-3xl font-black text-indigo-700">{{ number_format($summary_gabungan['ph_avg'] ?? 0, 2) }} <span class="text-sm font-bold">mnt</span></div>
+                        <div class="text-xs text-indigo-500/80 font-medium">Permintaan &rarr; Hasil</div>
                     </div>
-                    <div class="text-3xl font-black text-indigo-700">{{ number_format($summary_gabungan['ranap'] ?? 0) }}</div>
-                    @if(($summary_gabungan['total'] ?? 0) > 0)
-                    <div class="text-xs text-indigo-400 font-medium">{{ number_format((($summary_gabungan['ranap'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
-                    @else
-                    <div class="text-xs text-indigo-400 font-medium">0% dari total</div>
-                    @endif
+                    {{-- Tepat Waktu --}}
+                    <div class="bg-primary/5 border border-primary/15 rounded-2xl p-5 flex flex-col gap-1">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="text-[10px] font-black text-primary uppercase tracking-widest">Tepat Waktu</div>
+                            <span class="text-[9px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">&lt; 60 Mnt</span>
+                        </div>
+                        <div class="text-3xl font-black text-primary">{{ number_format($summary_gabungan['tepat'] ?? 0) }}</div>
+                        @if(($summary_gabungan['total'] ?? 0) > 0)
+                        <div class="text-xs text-primary/70 font-medium">{{ number_format((($summary_gabungan['tepat'] ?? 0) / $summary_gabungan['total']) * 100, 1) }}% dari total</div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Card Distribusi Interval Waktu Tunggu --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {{-- Card 1: Permintaan -> Sampel --}}
+                    <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span class="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                Distribusi P - S (Permintaan &rarr; Sampel)
+                            </span>
+                        </div>
+                        <div class="space-y-1.5">
+                            @foreach($summary_gabungan['ranges'] ?? [] as $r)
+                                <div class="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-gray-50/70 hover:bg-amber-50/50 transition">
+                                    <span class="font-medium text-gray-600">{{ $r['label'] }}</span>
+                                    <span class="font-black font-mono px-2 py-0.5 rounded-md text-xs {{ $r['ps'] > 0 ? 'text-amber-800 bg-amber-100' : 'text-gray-400 bg-gray-100' }}">
+                                        {{ number_format($r['ps']) }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Card 2: Sampel -> Hasil --}}
+                    <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span class="text-xs font-black uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Distribusi S - H (Sampel &rarr; Hasil)
+                            </span>
+                        </div>
+                        <div class="space-y-1.5">
+                            @foreach($summary_gabungan['ranges'] ?? [] as $r)
+                                <div class="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-gray-50/70 hover:bg-blue-50/50 transition">
+                                    <span class="font-medium text-gray-600">{{ $r['label'] }}</span>
+                                    <span class="font-black font-mono px-2 py-0.5 rounded-md text-xs {{ $r['sh'] > 0 ? 'text-blue-800 bg-blue-100' : 'text-gray-400 bg-gray-100' }}">
+                                        {{ number_format($r['sh']) }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Card 3: Permintaan -> Hasil --}}
+                    <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span class="text-xs font-black uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                Distribusi P - H (Permintaan &rarr; Hasil)
+                            </span>
+                        </div>
+                        <div class="space-y-1.5">
+                            @foreach($summary_gabungan['ranges'] ?? [] as $r)
+                                <div class="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-gray-50/70 hover:bg-indigo-50/50 transition">
+                                    <span class="font-medium text-gray-600">{{ $r['label'] }}</span>
+                                    <span class="font-black font-mono px-2 py-0.5 rounded-md text-xs {{ $r['ph'] > 0 ? 'text-indigo-800 bg-indigo-100' : 'text-gray-400 bg-gray-100' }}">
+                                        {{ number_format($r['ph']) }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
             </div>
             @endif
@@ -161,7 +209,7 @@
             <!-- Export Section -->
             <div class="flex items-center gap-4">
                 <a href="javascript:void(0)" 
-                    onclick="handleDownload('{{ route('laboratorium.export.excel', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai, 'type' => 'gabungan', 'kd_pj' => $kd_pj, 'ketepatan' => $ketepatan]) }}', 'lab-gabungan-{{ $tgl_mulai }}-{{ $tgl_selesai }}.xlsx')"
+                    onclick="handleDownload('{{ route('laboratorium.export.excel', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai, 'type' => 'gabungan', 'kd_pj' => $kd_pj, 'ketepatan' => $ketepatan, 'status' => $status, 'search' => $search]) }}', 'lama-pelayanan-lab-patologi-klinis-{{ $tgl_mulai }}-{{ $tgl_selesai }}.xlsx')"
                     class="bg-white border border-gray-200 text-gray-700 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -169,117 +217,118 @@
                     Ekspor Excel
                 </a>
                 <a href="javascript:void(0)" 
-                    onclick="handleDownload('{{ route('laboratorium.export.pdf', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai, 'type' => 'gabungan', 'kd_pj' => $kd_pj, 'ketepatan' => $ketepatan]) }}', 'lab-gabungan-{{ $tgl_mulai }}-{{ $tgl_selesai }}.pdf')"
+                    onclick="handleDownload('{{ route('laboratorium.export.pdf', ['tgl_mulai' => $tgl_mulai, 'tgl_selesai' => $tgl_selesai, 'type' => 'gabungan', 'kd_pj' => $kd_pj, 'ketepatan' => $ketepatan, 'status' => $status, 'search' => $search]) }}', 'lama-pelayanan-lab-patologi-klinis-{{ $tgl_mulai }}-{{ $tgl_selesai }}.pdf')"
                     class="bg-white border border-gray-200 text-gray-700 font-bold px-6 py-3 rounded-xl hover:bg-gray-50 transition shadow-sm flex items-center gap-2 text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                     Ekspor PDF
                 </a>
             </div>
+
             <!-- Table Card -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden space-y-6 p-2">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
-                            <tr class="bg-gray-50/50 border-b border-gray-100">
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">No</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Tanggal Sampel</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Nama Pasien</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Jenis Bayar</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">Pemeriksaan</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest">No. RM</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Unit</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Waktu Masuk & Hasil</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Total Waktu Tunggu</th>
-                                <th class="px-6 py-5 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
+                            <tr class="bg-gray-50/70 border-b border-gray-100">
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-center">No.</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-center">No.RM</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider">Nama Pasien</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider">Dokter Perujuk</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-center">No.Order</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-center">Kode Periksa</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider">Pemeriksaan</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-center">Jam Permintaan</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-center">Jam Sampel</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-center">Jam Hasil</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-right">Permintaan-Sampel(m)</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-right">Sampel-Hasil(m)</th>
+                                <th class="px-4 py-4 text-[11px] font-black text-gray-400 uppercase tracking-wider text-right">Permintaan-Hasil(m)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @forelse($data as $index => $item)
-                                <tr class="hover:bg-gray-50/30 transition-colors">
-                                    <td class="px-6 py-5 text-sm font-bold text-gray-300">
+                                @php
+                                    $tPermintaan = !empty($item->jam_permintaan_full) ? strtotime($item->jam_permintaan_full) : null;
+                                    $tSampel     = !empty($item->jam_sampel_full) ? strtotime($item->jam_sampel_full) : null;
+                                    $tHasil      = !empty($item->jam_hasil_full) ? strtotime($item->jam_hasil_full) : null;
+
+                                    $psMin = ($tSampel && $tPermintaan) ? number_format(($tSampel - $tPermintaan) / 60, 2) : '0.00';
+                                    $shMin = ($tHasil && $tSampel) ? number_format(($tHasil - $tSampel) / 60, 2) : '0.00';
+                                    $phMin = ($tHasil && $tPermintaan) ? number_format(($tHasil - $tPermintaan) / 60, 2) : '0.00';
+                                @endphp
+                                <tr class="hover:bg-gray-50/50 transition-colors">
+                                    <td class="px-4 py-4 text-xs font-bold text-gray-300 text-center">
                                         {{ str_pad($data->firstItem() + $index, 2, '0', STR_PAD_LEFT) }}
                                     </td>
-                                    <td class="px-6 py-5">
-                                        <div class="text-sm font-black text-gray-700">
-                                            {{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <div class="text-sm font-black text-gray-800 uppercase">{{ $item->nm_pasien }}</div>
-                                        <div class="text-[10px] font-bold text-gray-400 mt-0.5 tracking-widest">{{ $item->no_rawat }}</div>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-black bg-blue-50 text-blue-600 tracking-tighter uppercase">
-                                            {{ $item->png_jawab }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <div class="text-[10px] font-medium text-gray-600 leading-relaxed max-w-[200px]">
-                                            {{ $item->pemeriksaan }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-5">
-                                        <span class="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black bg-gray-100 text-gray-500 tracking-tighter">
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black bg-gray-100 text-gray-600 tracking-tighter">
                                             {{ $item->no_rkm_medis }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-5">
-                                        @if($item->status == 'ralan')
-                                            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-black bg-primary/10 text-primary tracking-widest">RALAN</span>
-                                        @else
-                                            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-black bg-indigo-100 text-indigo-600 tracking-widest">RANAP</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-5 text-center">
-                                        <div class="flex items-center justify-center gap-3">
-                                            <div class="text-center">
-                                                <div class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">Sampel</div>
-                                                <div class="text-sm font-black text-gray-600">{{ $item->jam_sampel }}</div>
-                                            </div>
-                                            <div class="h-8 w-px bg-gray-100"></div>
-                                            <div class="text-center">
-                                                <div class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">Hasil</div>
-                                                <div class="text-sm font-black text-gray-600">{{ $item->jam_hasil }}</div>
-                                            </div>
+                                    <td class="px-4 py-4">
+                                        <div class="text-xs font-black text-gray-800 uppercase">{{ $item->nm_pasien }}</div>
+                                        <div class="text-[10px] font-bold text-gray-400 mt-0.5 tracking-widest flex items-center gap-1.5">
+                                            <span>{{ $item->no_rawat }}</span>
+                                            <span>&bull;</span>
+                                            <span class="uppercase font-extrabold {{ strtolower($item->status) == 'ralan' ? 'text-sky-600' : 'text-indigo-600' }}">
+                                                {{ strtolower($item->status) == 'ralan' ? 'Ralan' : 'Ranap' }}
+                                            </span>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-5 text-center">
-                                        @php
-                                            $parts = explode(':', $item->total_waktu);
-                                            $hours = (int)($parts[0] ?? 0);
-                                            $minutes = (int)($parts[1] ?? 0);
-                                            $seconds = (int)($parts[2] ?? 0);
-                                            $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
-                                            
-                                            $isTepatWaktu = $totalSeconds < 3600;
-                                            $colorClass = $isTepatWaktu ? 'text-primary bg-primary/10' : 'text-red-600 bg-red-50';
-                                        @endphp
-                                        <span class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-black {{ $colorClass }} shadow-sm">
-                                            @if($hours > 0) {{ $hours }}j @endif
-                                            @if($minutes > 0) {{ $minutes }}m @endif
-                                            {{ $seconds }}d
+                                    <td class="px-4 py-4">
+                                        <div class="text-xs font-bold text-gray-700 uppercase">
+                                            {{ $item->nm_dokter_perujuk ?: '-' }}
+                                        </div>
+                                        <div class="text-[10px] text-gray-400 font-medium">
+                                            {{ $item->png_jawab }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-black font-mono bg-primary/10 text-primary border border-primary/20">
+                                            {{ $item->noorder }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-5 text-center">
-                                        @if($isTepatWaktu)
-                                            <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black bg-primary/10 text-primary uppercase tracking-widest border border-primary/20">TEPAT WAKTU</span>
-                                        @else
-                                            <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-black bg-red-100 text-red-600 uppercase tracking-widest border border-red-200">TIDAK SESUAI</span>
-                                        @endif
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                            {{ $item->kd_jenis_prw ?: '-' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <div class="text-xs font-semibold text-gray-700 leading-relaxed max-w-[220px]">
+                                            {{ $item->pemeriksaan ?: '-' }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 text-center text-xs font-mono text-gray-600">
+                                        {{ $item->jam_permintaan_full ?: '-' }}
+                                    </td>
+                                    <td class="px-4 py-4 text-center text-xs font-mono text-gray-600">
+                                        {{ $item->jam_sampel_full ?: '-' }}
+                                    </td>
+                                    <td class="px-4 py-4 text-center text-xs font-mono text-gray-600">
+                                        {{ $item->jam_hasil_full ?: '-' }}
+                                    </td>
+                                    <td class="px-4 py-4 text-right text-xs font-bold font-mono text-gray-700">
+                                        {{ $psMin }}
+                                    </td>
+                                    <td class="px-4 py-4 text-right text-xs font-bold font-mono text-gray-700">
+                                        {{ $shMin }}
+                                    </td>
+                                    <td class="px-4 py-4 text-right text-xs font-black font-mono text-primary">
+                                        {{ $phMin }}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="px-6 py-20 text-center">
+                                    <td colspan="13" class="px-6 py-20 text-center">
                                         <div class="flex flex-col items-center">
                                             <div class="p-6 bg-gray-50 rounded-full mb-4">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                             </div>
-                                            <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Data tidak ditemukan</p>
+                                             <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Data tidak ditemukan</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -287,6 +336,7 @@
                         </tbody>
                     </table>
                 </div>
+
                 @if($data->hasPages())
                     <div class="px-6 py-6 border-t border-gray-50 bg-gray-50/20">
                         {{ $data->links() }}
@@ -310,8 +360,6 @@
         <!-- Overlay -->
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeInfoModal()"></div>
-
-            <!-- Center modal content -->
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
@@ -321,7 +369,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <h3 class="text-lg font-black uppercase tracking-wider">Informasi Waktu Tunggu Hasil Lab</h3>
+                        <h3 class="text-lg font-black uppercase tracking-wider">Informasi Data Lama Pelayanan Lab</h3>
                     </div>
                     <button onclick="closeInfoModal()" class="text-white hover:text-gray-200 focus:outline-none">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -335,40 +383,16 @@
                     <div>
                         <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">1. Deskripsi Menu</h4>
                         <p class="text-sm text-gray-600 leading-relaxed">
-                            Menu **Waktu Tunggu Hasil Lab - Gabungan** digunakan untuk mengukur dan memonitor durasi waktu penyelesaian (Turn Around Time / TAT) pemeriksaan laboratorium bagi seluruh pasien rumah sakit, baik rawat jalan maupun rawat inap. Pengukuran dihitung mulai dari waktu sampel diambil (<code class="text-primary font-bold">permintaan_lab.jam_sampel</code>) hingga jam hasil pemeriksaan selesai diperiksa/diinput pada tabel <code class="text-primary font-bold">periksa_lab.jam</code>.
+                            Menu <strong>Data Lama Pelayanan Laboratorium Patologi Klinis (Waktu Tunggu Gabungan)</strong> menyajikan durasi presisi dari 3 tahapan pelayanan: <strong>Jam Permintaan</strong>, <strong>Jam Sampel</strong>, dan <strong>Jam Hasil</strong>. Fitur ini dilengkapi tabel ringkasan rata-rata serta distribusi interval waktu (0-15m, >15-<=30m, dst) yang identik dengan laporan SIMRS Khanza Desktop.
                         </p>
                     </div>
 
                     <div>
-                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">2. Aturan & Rumus Kalkulasi</h4>
-                        <ul class="list-disc pl-5 space-y-4 text-sm text-gray-600">
-                            <li>
-                                <strong>Waktu Tunggu Lab (Durasi):</strong> Selisih waktu antara waktu pemeriksaan selesai dengan waktu pengambilan sampel.
-                                <div class="mt-1.5 bg-gray-50 p-2.5 rounded-xl border border-gray-100 font-mono text-[10px] text-gray-700 shadow-inner">
-                                    <strong class="text-primary text-[11px]">Formula Matematika:</strong> Durasi = Waktu Periksa (periksa_lab) - Waktu Sampel (permintaan_lab)<br>
-                                    <strong class="text-primary text-[11px]">Formula Excel:</strong> <code class="text-red-600 font-bold">=(F2+G2)-(D2+E2)</code> (Di mana kolom F & G merupakan tanggal & jam hasil dari periksa_lab, dan kolom D & E merupakan tanggal & jam sampel dari permintaan_lab).
-                                </div>
-                            </li>
-                            <li>
-                                <strong>Klasifikasi Kecepatan (Color-Coding):</strong>
-                                <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
-                                    <div class="bg-green-50 p-3 rounded-xl border border-green-200">
-                                        <div class="text-green-800 font-black text-xs">HIJAU (CEPAT)</div>
-                                        <div class="text-[10px] text-green-600 font-medium">Durasi &lt; 30 Menit</div>
-                                    </div>
-                                    <div class="bg-orange-50 p-3 rounded-xl border border-orange-200">
-                                        <div class="text-orange-800 font-black text-xs">KUNING (SEDANG)</div>
-                                        <div class="text-[10px] text-orange-600 font-medium">Durasi 30 s/d 59 Menit</div>
-                                    </div>
-                                    <div class="bg-red-50 p-3 rounded-xl border border-red-200">
-                                        <div class="text-red-800 font-black text-xs">MERAH (LAMBAT)</div>
-                                        <div class="text-[10px] text-red-600 font-medium">Durasi &ge; 60 Menit</div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <strong>Status Ketepatan:</strong> Berdasarkan SPM (Standar Pelayanan Minimal) laboratorium, penyelesaian hasil laboratorium dianggap **Tepat Waktu** jika total durasi kurang dari **60 menit**, dan dianggap **Tidak Sesuai** jika durasi mencapai atau lebih dari **60 menit**.
-                            </li>
+                        <h4 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-2 border-b pb-1">2. Aturan & Rumus Kalkulasi (Menit)</h4>
+                        <ul class="list-disc pl-5 space-y-3 text-sm text-gray-600">
+                            <li><strong>Permintaan-Sampel(m):</strong> Durasi dari Jam Permintaan dikirim ke Jam Sampel diambil (`(Jam Sampel - Jam Permintaan) / 60`).</li>
+                            <li><strong>Sampel-Hasil(m):</strong> Durasi dari Jam Sampel diambil ke Jam Hasil selesai (`(Jam Hasil - Jam Sampel) / 60`).</li>
+                            <li><strong>Permintaan-Hasil(m):</strong> Total durasi pelayanan dari Jam Permintaan hingga Hasil (`(Jam Hasil - Jam Permintaan) / 60`).</li>
                         </ul>
                     </div>
 
@@ -378,54 +402,48 @@
                             <table class="w-full text-left text-xs border border-gray-100">
                                 <thead>
                                     <tr class="bg-gray-50 border-b border-gray-100">
-                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom UI</th>
-                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Tabel</th>
-                                        <th class="p-2 font-bold text-gray-500 uppercase">Nama Kolom</th>
-                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan / Kondisi SQL</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom Tampilan UI</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Tabel SQL</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Kolom SQL</th>
+                                        <th class="p-2 font-bold text-gray-500 uppercase">Keterangan</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <tr>
-                                        <td class="p-2 font-semibold text-gray-700">No. Order / RM</td>
+                                        <td class="p-2 font-semibold text-gray-700">No. Order</td>
                                         <td class="p-2 font-mono text-primary">permintaan_lab</td>
-                                        <td class="p-2 font-mono text-primary">noorder, no_rawat</td>
-                                        <td class="p-2 text-gray-600">Nomor order unik permintaan lab dan nomor perawatan pasien.</td>
+                                        <td class="p-2 font-mono text-primary">noorder</td>
+                                        <td class="p-2 text-gray-600">Nomor order unik permintaan lab.</td>
                                     </tr>
                                     <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Nama Pasien</td>
+                                        <td class="p-2 font-semibold text-gray-700">No. RM & Nama Pasien</td>
                                         <td class="p-2 font-mono text-primary">pasien</td>
-                                        <td class="p-2 font-mono text-primary">nm_pasien</td>
-                                        <td class="p-2 text-gray-600">Nama lengkap pasien.</td>
+                                        <td class="p-2 font-mono text-primary">no_rkm_medis, nm_pasien</td>
+                                        <td class="p-2 text-gray-600">Identitas pasien dari reg_periksa & pasien.</td>
                                     </tr>
                                     <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Unit</td>
+                                        <td class="p-2 font-semibold text-gray-700">Dokter Perujuk</td>
+                                        <td class="p-2 font-mono text-primary">dokter</td>
+                                        <td class="p-2 font-mono text-primary">nm_dokter</td>
+                                        <td class="p-2 text-gray-600">Nama dokter perujuk permintaan lab.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-semibold text-gray-700">Jam Permintaan</td>
                                         <td class="p-2 font-mono text-primary">permintaan_lab</td>
-                                        <td class="p-2 font-mono text-primary">status</td>
-                                        <td class="p-2 text-gray-600">Status rujukan asal pasien (ralan / ranap).</td>
+                                        <td class="p-2 font-mono text-primary">tgl_permintaan, jam_permintaan</td>
+                                        <td class="p-2 text-gray-600">Waktu order dikirim dari unit/poli.</td>
                                     </tr>
                                     <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Waktu Sampel (Masuk)</td>
+                                        <td class="p-2 font-semibold text-gray-700">Jam Sampel</td>
                                         <td class="p-2 font-mono text-primary">permintaan_lab</td>
                                         <td class="p-2 font-mono text-primary">tgl_sampel, jam_sampel</td>
-                                        <td class="p-2 text-gray-600">Waktu saat sampel laboratorium diambil.</td>
+                                        <td class="p-2 text-gray-600">Waktu pengambilan sampel.</td>
                                     </tr>
                                     <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Waktu Hasil</td>
-                                        <td class="p-2 font-mono text-primary">periksa_lab</td>
-                                        <td class="p-2 font-mono text-primary">tgl_periksa, jam</td>
-                                        <td class="p-2 text-gray-600">Tanggal periksa dan jam selesai pemeriksaan laboratorium dari tabel periksa_lab.</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Pemeriksaan</td>
-                                        <td class="p-2 font-mono text-primary">periksa_lab & jns_perawatan_lab</td>
-                                        <td class="p-2 font-mono text-primary">kd_jenis_prw, nm_perawatan</td>
-                                        <td class="p-2 text-gray-600">Nama jenis pemeriksaan laboratorium yang diambil dari tabel periksa_lab dan dihubungkan ke jns_perawatan_lab (diakumulasikan via GROUP_CONCAT).</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2 font-semibold text-gray-700">Filter Kode Periksa</td>
-                                        <td class="p-2 font-mono text-primary">periksa_lab</td>
-                                        <td class="p-2 font-mono text-primary">kd_jenis_prw</td>
-                                        <td class="p-2 text-gray-600">Secara default mengecualikan kode periksa paket internal (seperti XBPJS, LIBI, BPJS paket) dan dapat disesuaikan melalui tombol <strong>Setting Kode Periksa</strong>.</td>
+                                        <td class="p-2 font-semibold text-gray-700">Jam Hasil</td>
+                                        <td class="p-2 font-mono text-primary">permintaan_lab / periksa_lab</td>
+                                        <td class="p-2 font-mono text-primary">tgl_hasil, jam_hasil / tgl_periksa, jam</td>
+                                        <td class="p-2 text-gray-600">Waktu hasil laboratorium selesai.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -443,9 +461,7 @@
         </div>
     </div>
 
-    {{-- ==================================================== --}}
-    {{-- MODAL SETTING FILTER KODE PERIKSA (Sama persis dg Kategori Pasien) --}}
-    {{-- ==================================================== --}}
+    {{-- MODAL SETTING FILTER KODE PERIKSA --}}
     <div id="settingModal"
          class="fixed inset-0 z-50 hidden overflow-y-auto"
          x-show="showSettingModal"
@@ -533,7 +549,7 @@
                     </div>
                 </div>
 
-                {{-- Checkbox Grid (Scrollable) --}}
+                {{-- Checkbox Grid --}}
                 <div class="px-6 pb-4 max-h-64 overflow-y-auto">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         <template x-for="item in filteredKodeList" :key="item.kd_jenis_prw">
@@ -553,7 +569,6 @@
                             </label>
                         </template>
 
-                        {{-- Empty search state --}}
                         <div x-show="filteredKodeList.length === 0" class="col-span-2 text-center py-8 text-gray-400 text-sm font-medium">
                             Tidak ada kode yang cocok dengan pencarian "
                             <span class="font-bold text-gray-600" x-text="searchKode"></span>
@@ -588,32 +603,81 @@
             </div>
         </div>
     </div>
+
     </div>
 
     <script>
-        // ====================================================
-        // Kode Periksa Filter & Modal Logic (Session-based)
-        // ====================================================
-        // Kode default yang dikecualikan (paket BPJS, LIBI, dll sesuai request)
         const DEFAULT_EXCLUDED = @json(\App\Repositories\LaboratoriumRepository::$defaultExcludedKode);
+
+        function openInfoModal() {
+            const el = document.getElementById('infoModal');
+            if (el) el.classList.remove('hidden');
+        }
+
+        function closeInfoModal() {
+            const el = document.getElementById('infoModal');
+            if (el) el.classList.add('hidden');
+        }
+
+        function openSettingModal() {
+            const el = document.getElementById('settingModal');
+            if (el) {
+                el.classList.remove('hidden');
+                el.style.display = 'block';
+            }
+        }
+
+        function closeSettingModal() {
+            const el = document.getElementById('settingModal');
+            if (el) {
+                el.classList.add('hidden');
+                el.style.display = 'none';
+            }
+        }
+
+        function resetToDefaultFilter() {
+            fetch('{{ route("laboratorium.gabungan.reset_settings") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
 
         function kodePeriksaSetting() {
             return {
-                availableKodeList: @json($availableKode ?? []),
-                selectedKode: [],
-                tempSelected: [],
                 showSettingModal: false,
                 searchKode: '',
-                isCustomFilterActive: @json($filter_kode_aktif ?? false),
+                availableKodeList: @json($availableKode ?? []),
+                sessionKode: @json($session_kode ?? null),
+                tempSelected: [],
+                filterKodeAktif: @json($filter_kode_aktif ?? false),
 
-                getDefaultKode() {
-                    return this.availableKodeList
-                        .map(i => i.kd_jenis_prw)
-                        .filter(kd => !DEFAULT_EXCLUDED.includes(kd));
+                init() {
+                    if (this.sessionKode !== null && Array.isArray(this.sessionKode)) {
+                        this.tempSelected = [...this.sessionKode];
+                    } else {
+                        this.tempSelected = this.availableKodeList
+                            .map(item => item.kd_jenis_prw)
+                            .filter(kd => !DEFAULT_EXCLUDED.includes(kd));
+                    }
+                },
+
+                get isCustomFilterActive() {
+                    return this.filterKodeAktif;
                 },
 
                 get filteredKodeList() {
-                    if (!this.searchKode.trim()) return this.availableKodeList;
+                    if (!this.searchKode.trim()) {
+                        return this.availableKodeList;
+                    }
                     const q = this.searchKode.toLowerCase();
                     return this.availableKodeList.filter(item =>
                         (item.kd_jenis_prw && item.kd_jenis_prw.toLowerCase().includes(q)) ||
@@ -621,183 +685,57 @@
                     );
                 },
 
-                init() {
-                    window.alpineSettingComponent = this;
-
-                    const sessionKode = @json($session_kode ?? null);
-                    if (sessionKode !== null && Array.isArray(sessionKode) && sessionKode.length > 0) {
-                        this.selectedKode = sessionKode;
-                        this.isCustomFilterActive = true;
-                    } else {
-                        // Default: semua kode kecuali paket
-                        this.selectedKode = this.getDefaultKode();
-                        this.isCustomFilterActive = false;
-                    }
-
-                    this.tempSelected = [...this.selectedKode];
-                },
-
-                openSettingModal() {
-                    this.tempSelected = [...this.selectedKode];
-                    this.searchKode = '';
-                    this.showSettingModal = true;
-                    const el = document.getElementById('settingModal');
-                    if (el) {
-                        el.classList.remove('hidden');
-                        el.style.display = 'block';
-                    }
-                    document.body.style.overflow = 'hidden';
-                },
-
-                closeSettingModal() {
-                    this.showSettingModal = false;
-                    const el = document.getElementById('settingModal');
-                    if (el) {
-                        el.classList.add('hidden');
-                        el.style.display = 'none';
-                    }
-                    document.body.style.overflow = '';
-                    this.searchKode = '';
-                },
-
-                toggleKode(kode) {
-                    const idx = this.tempSelected.indexOf(kode);
-                    if (idx === -1) {
-                        this.tempSelected.push(kode);
-                    } else {
+                toggleKode(kd) {
+                    const idx = this.tempSelected.indexOf(kd);
+                    if (idx > -1) {
                         this.tempSelected.splice(idx, 1);
+                    } else {
+                        this.tempSelected.push(kd);
                     }
                 },
 
                 selectAllKode() {
-                    const filteredKodes = this.filteredKodeList.map(i => i.kd_jenis_prw);
-                    filteredKodes.forEach(kode => {
-                        if (!this.tempSelected.includes(kode)) {
-                            this.tempSelected.push(kode);
-                        }
-                    });
+                    this.tempSelected = this.availableKodeList.map(item => item.kd_jenis_prw);
                 },
 
                 clearAllKode() {
-                    const filteredKodes = this.filteredKodeList.map(i => i.kd_jenis_prw);
-                    this.tempSelected = this.tempSelected.filter(k => !filteredKodes.includes(k));
+                    this.tempSelected = [];
                 },
 
                 resetToDefault() {
-                    this.tempSelected = this.getDefaultKode();
+                    this.tempSelected = this.availableKodeList
+                        .map(item => item.kd_jenis_prw)
+                        .filter(kd => !DEFAULT_EXCLUDED.includes(kd));
+                },
+
+                openSettingModal() {
+                    this.showSettingModal = true;
+                    openSettingModal();
+                },
+
+                closeSettingModal() {
+                    this.showSettingModal = false;
+                    closeSettingModal();
                 },
 
                 saveAndApply() {
-                    Swal.fire({
-                        title: 'Menyimpan Pengaturan...',
-                        text: 'Menerapkan filter kode periksa pilihan Anda',
-                        allowOutsideClick: false,
-                        didOpen: () => { Swal.showLoading(); }
-                    });
-
-                    fetch('{{ route('laboratorium.gabungan.save_settings') }}', {
+                    fetch('{{ route("laboratorium.gabungan.save_settings") }}', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ kode: this.tempSelected })
                     })
                     .then(res => res.json())
                     .then(data => {
-                        this.selectedKode = [...this.tempSelected];
-                        this.isCustomFilterActive = true;
-                        this.closeSettingModal();
-                        document.getElementById('filterForm').submit();
-                    })
-                    .catch(err => {
-                        Swal.fire('Error', 'Gagal menyimpan pengaturan: ' + err.message, 'error');
-                    });
-                },
-
-                resetToDefaultFilter() {
-                    Swal.fire({
-                        title: 'Mereset Pengaturan...',
-                        text: 'Mengembalikan ke filter default (paket dikecualikan)',
-                        allowOutsideClick: false,
-                        didOpen: () => { Swal.showLoading(); }
-                    });
-
-                    fetch('{{ route('laboratorium.gabungan.reset_settings') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        if (data.success) {
+                            this.closeSettingModal();
+                            document.getElementById('filterForm').submit();
                         }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        document.getElementById('filterForm').submit();
-                    })
-                    .catch(err => {
-                        document.getElementById('filterForm').submit();
                     });
                 }
-            };
-        }
-
-        // Global functions for direct onclick
-        function openSettingModal() {
-            if (window.alpineSettingComponent) {
-                window.alpineSettingComponent.openSettingModal();
-            } else {
-                const el = document.getElementById('settingModal');
-                if (el) {
-                    el.classList.remove('hidden');
-                    el.style.display = 'block';
-                }
-                document.body.style.overflow = 'hidden';
             }
         }
-
-        function closeSettingModal() {
-            if (window.alpineSettingComponent) {
-                window.alpineSettingComponent.closeSettingModal();
-            } else {
-                const el = document.getElementById('settingModal');
-                if (el) {
-                    el.classList.add('hidden');
-                    el.style.display = 'none';
-                }
-                document.body.style.overflow = '';
-            }
-        }
-
-        function resetToDefaultFilter() {
-            if (window.alpineSettingComponent) {
-                window.alpineSettingComponent.resetToDefaultFilter();
-            } else {
-                fetch('{{ route('laboratorium.gabungan.reset_settings') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                }).then(() => {
-                    document.getElementById('filterForm').submit();
-                });
-            }
-        }
-
-        function openInfoModal() {
-            document.getElementById('infoModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeInfoModal() {
-            document.getElementById('infoModal').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        // Register with Alpine if available
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('kodePeriksaSetting', kodePeriksaSetting);
-        });
-        window.kodePeriksaSetting = kodePeriksaSetting;
     </script>
 @endsection

@@ -67,16 +67,15 @@ class LaboratoriumRepository
      *  - Waktu Hasil     : periksa_lab.tgl_periksa & jam (kategori PK), di-join per no_rawat+kd_jenis_prw
      *  - Pemeriksaan     : GROUP_CONCAT nm_perawatan dari jns_perawatan_lab per noorder
      */
-    public function getLabGabunganQuery($startDate, $endDate, $kd_pj = null, $ketepatan = null, $kode_periksa_list = null)
+    public function getLabGabunganQuery($startDate, $endDate, $kd_pj = null, $ketepatan = null, $kode_periksa_list = null, $status = null, $search = null)
     {
         $query = DB::table('permintaan_lab')
-            // Link order ke detail kode periksa (satu order bisa punya beberapa kode)
-            ->join('permintaan_detail_permintaan_lab as pdpl', 'permintaan_lab.noorder', '=', 'pdpl.noorder')
-            ->join('jns_perawatan_lab', 'pdpl.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
             ->join('reg_periksa', 'permintaan_lab.no_rawat', '=', 'reg_periksa.no_rawat')
             ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
             ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
-            // Join periksa_lab per (no_rawat, kd_jenis_prw) untuk mendapatkan waktu hasil
+            ->leftJoin('dokter', 'permintaan_lab.dokter_perujuk', '=', 'dokter.kd_dokter')
+            ->leftJoin('permintaan_detail_permintaan_lab as pdpl', 'permintaan_lab.noorder', '=', 'pdpl.noorder')
+            ->leftJoin('jns_perawatan_lab', 'pdpl.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
             ->leftJoin('periksa_lab', function ($join) {
                 $join->on('periksa_lab.no_rawat', '=', 'permintaan_lab.no_rawat')
                      ->on('periksa_lab.kd_jenis_prw', '=', 'pdpl.kd_jenis_prw')
@@ -85,13 +84,9 @@ class LaboratoriumRepository
             })
             ->whereBetween('permintaan_lab.tgl_sampel', [$startDate, $endDate]);
 
-        // ─── Filter Kode Periksa ───────────────────────────────────────────────
-        // Diterapkan pada pdpl.kd_jenis_prw:
-        // Jika kode dikeluarkan → ORDER permintaan_lab tersebut hilang dari hasil
         if (!empty($kode_periksa_list) && is_array($kode_periksa_list)) {
             $query->whereIn('pdpl.kd_jenis_prw', $kode_periksa_list);
         } else {
-            // Default: kecualikan kode paket internal (XBPJS, LIBI, dll)
             $query->whereNotIn('pdpl.kd_jenis_prw', self::$defaultExcludedKode);
         }
 
@@ -99,9 +94,22 @@ class LaboratoriumRepository
             $query->where('reg_periksa.kd_pj', $kd_pj);
         }
 
-        // Filter ketepatan menggunakan HAVING karena jam_hasil adalah hasil agregasi MAX()
+        if (!empty($status)) {
+            $query->where('permintaan_lab.status', strtolower($status));
+        }
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('permintaan_lab.noorder', 'like', "%{$search}%")
+                  ->orWhere('permintaan_lab.no_rawat', 'like', "%{$search}%")
+                  ->orWhere('pasien.no_rkm_medis', 'like', "%{$search}%")
+                  ->orWhere('pasien.nm_pasien', 'like', "%{$search}%")
+                  ->orWhere('dokter.nm_dokter', 'like', "%{$search}%");
+            });
+        }
+
         if ($ketepatan) {
-            $diffSql = "TIMESTAMPDIFF(SECOND, CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel), CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam)))";
+            $diffSql = "TIMESTAMPDIFF(SECOND, CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel), IF(permintaan_lab.tgl_hasil != '0000-00-00' AND permintaan_lab.jam_hasil != '00:00:00', CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil), CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam))))";
             if ($ketepatan === 'tepat') {
                 $query->havingRaw("$diffSql < 3600");
             } elseif ($ketepatan === 'tidak_tepat') {
@@ -111,32 +119,39 @@ class LaboratoriumRepository
 
         return $query->select([
                 'permintaan_lab.noorder',
-                'permintaan_lab.tgl_sampel',
-                'pasien.nm_pasien',
-                'pasien.no_rkm_medis',
-                'permintaan_lab.jam_sampel',
-                DB::raw('MAX(periksa_lab.tgl_periksa) as tgl_hasil'),
-                DB::raw('MAX(periksa_lab.jam) as jam_hasil'),
                 'permintaan_lab.no_rawat',
+                'pasien.no_rkm_medis',
+                'pasien.nm_pasien',
+                'dokter.nm_dokter as nm_dokter_perujuk',
+                'permintaan_lab.tgl_sampel',
+                'permintaan_lab.jam_sampel',
+                DB::raw("CONCAT(permintaan_lab.tgl_permintaan, ' ', permintaan_lab.jam_permintaan) as jam_permintaan_full"),
+                DB::raw("CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel) as jam_sampel_full"),
+                DB::raw("IF(permintaan_lab.tgl_hasil != '0000-00-00' AND permintaan_lab.jam_hasil != '00:00:00', CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil), CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam))) as jam_hasil_full"),
+                DB::raw("MAX(periksa_lab.tgl_periksa) as tgl_hasil"),
+                DB::raw("MAX(periksa_lab.jam) as jam_hasil"),
                 'permintaan_lab.status',
                 'penjab.png_jawab',
+                DB::raw("GROUP_CONCAT(DISTINCT pdpl.kd_jenis_prw SEPARATOR ', ') as kd_jenis_prw"),
                 DB::raw("GROUP_CONCAT(DISTINCT jns_perawatan_lab.nm_perawatan SEPARATOR ', ') as pemeriksaan"),
                 DB::raw("TIMEDIFF(
-                    CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam)),
+                    IF(permintaan_lab.tgl_hasil != '0000-00-00' AND permintaan_lab.jam_hasil != '00:00:00', CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil), CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam))),
                     CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel)
                 ) as total_waktu"),
             ])
-            // Hanya tampilkan order yang sudah benar-benar selesai diperiksa
-            // (ada record di periksa_lab). Order yang belum ada hasilnya di-exclude
-            // agar tidak tampil sebagai "Tepat Waktu 0 detik" yang menyesatkan.
-            ->havingRaw('MAX(periksa_lab.tgl_periksa) IS NOT NULL')
+            ->havingRaw("jam_hasil_full IS NOT NULL AND jam_hasil_full != ''")
             ->groupBy(
                 'permintaan_lab.noorder',
-                'permintaan_lab.tgl_sampel',
-                'pasien.nm_pasien',
-                'pasien.no_rkm_medis',
-                'permintaan_lab.jam_sampel',
                 'permintaan_lab.no_rawat',
+                'pasien.no_rkm_medis',
+                'pasien.nm_pasien',
+                'dokter.nm_dokter',
+                'permintaan_lab.tgl_permintaan',
+                'permintaan_lab.jam_permintaan',
+                'permintaan_lab.tgl_sampel',
+                'permintaan_lab.jam_sampel',
+                'permintaan_lab.tgl_hasil',
+                'permintaan_lab.jam_hasil',
                 'permintaan_lab.status',
                 'penjab.png_jawab'
             )
@@ -342,5 +357,73 @@ class LaboratoriumRepository
             'total'    => $unique->count(),
         ];
     }
+
+    /**
+     * Get query for Detail Tindakan Laboratorium
+     *
+     * @param string      $startDate
+     * @param string      $endDate
+     * @param string|null $kd_pj     Filter Jenis Bayar (Penjab)
+     * @param string|null $status    Filter Status Ralan/Ranap
+     * @param string|null $search    Filter Kata Kunci
+     */
+    public function getDetailTindakanQuery($startDate, $endDate, $kd_pj = null, $status = null, $search = null, $jk = null)
+    {
+        $query = DB::table('periksa_lab')
+            ->join('reg_periksa', 'periksa_lab.no_rawat', '=', 'reg_periksa.no_rawat')
+            ->join('pasien', 'reg_periksa.no_rkm_medis', '=', 'pasien.no_rkm_medis')
+            ->join('penjab', 'reg_periksa.kd_pj', '=', 'penjab.kd_pj')
+            ->leftJoin('jns_perawatan_lab', 'periksa_lab.kd_jenis_prw', '=', 'jns_perawatan_lab.kd_jenis_prw')
+            ->leftJoin('dokter as dokter_pj', 'periksa_lab.kd_dokter', '=', 'dokter_pj.kd_dokter')
+            ->leftJoin('dokter as dokter_perujuk', 'periksa_lab.dokter_perujuk', '=', 'dokter_perujuk.kd_dokter')
+            ->leftJoin('petugas', 'periksa_lab.nip', '=', 'petugas.nip')
+            ->whereBetween('periksa_lab.tgl_periksa', [$startDate, $endDate]);
+
+        if (!empty($kd_pj)) {
+            $query->where('reg_periksa.kd_pj', $kd_pj);
+        }
+
+        if (!empty($status)) {
+            $query->where('periksa_lab.status', $status);
+        }
+
+        if (!empty($jk)) {
+            $query->where('pasien.jk', $jk);
+        }
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('periksa_lab.no_rawat', 'like', "%{$search}%")
+                  ->orWhere('pasien.no_rkm_medis', 'like', "%{$search}%")
+                  ->orWhere('pasien.nm_pasien', 'like', "%{$search}%")
+                  ->orWhere('periksa_lab.kd_jenis_prw', 'like', "%{$search}%")
+                  ->orWhere('jns_perawatan_lab.nm_perawatan', 'like', "%{$search}%")
+                  ->orWhere('dokter_pj.nm_dokter', 'like', "%{$search}%")
+                  ->orWhere('dokter_perujuk.nm_dokter', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->select([
+                'periksa_lab.no_rawat',
+                'pasien.no_rkm_medis',
+                'pasien.nm_pasien',
+                'pasien.jk',
+                'periksa_lab.kd_jenis_prw',
+                'jns_perawatan_lab.nm_perawatan',
+                'periksa_lab.kd_dokter as kd_pj_lab',
+                'dokter_pj.nm_dokter as nm_dokter_pj',
+                'periksa_lab.nip',
+                'petugas.nama as nm_petugas',
+                'periksa_lab.dokter_perujuk as kd_dokter_perujuk',
+                'dokter_perujuk.nm_dokter as nm_dokter_perujuk',
+                'periksa_lab.tgl_periksa',
+                'periksa_lab.jam',
+                'penjab.png_jawab',
+                'periksa_lab.status',
+            ])
+            ->orderBy('periksa_lab.tgl_periksa', 'desc')
+            ->orderBy('periksa_lab.jam', 'desc');
+    }
 }
+
 

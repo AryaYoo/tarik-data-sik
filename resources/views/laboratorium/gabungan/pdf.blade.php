@@ -2,11 +2,12 @@
 <html>
 
 <head>
-    <title>Waktu Tunggu Hasil Lab - Gabungan</title>
+    <title>Data Lama Pelayanan Laboratorium Patologi Klinis</title>
     <style>
         body {
             font-family: sans-serif;
-            font-size: 10px;
+            font-size: 8.5px;
+            color: #333;
         }
 
         table {
@@ -18,22 +19,30 @@
         th,
         td {
             border: 1px solid #ccc;
-            padding: 5px;
+            padding: 4px 5px;
             text-align: left;
+            vertical-align: middle;
         }
 
         th {
-            background: #f2f2f2;
+            background: #007C3C;
+            color: #ffffff;
             font-weight: bold;
+            font-size: 8.5px;
+            text-transform: uppercase;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .text-center {
             text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
         }
 
         .footer {
@@ -42,74 +51,111 @@
             width: 100%;
             text-align: center;
             font-size: 8px;
+            color: #666;
+        }
+
+        .summary-table {
+            margin-top: 15px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .summary-table td {
+            padding: 3px 6px;
+        }
+
+        .bg-gray {
+            background-color: #f2f2f2;
+            font-weight: bold;
         }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h2 style="margin-bottom: 5px;">WAKTU TUNGGU HASIL LABORATORIUM - GABUNGAN</h2>
-        <div style="font-size: 12px; font-weight: bold;">UNIT LABORATORIUM</div>
-        <p>Periode: {{ \Carbon\Carbon::parse($tgl_mulai)->format('d/m/Y') }} s/d {{ \Carbon\Carbon::parse($tgl_selesai)->format('d/m/Y') }}</p>
+        <h2 style="margin-bottom: 4px; font-size: 13px; text-transform: uppercase;">DATA LAMA PELAYANAN LABORATORIUM PATOLOGI KLINIS</h2>
+        <div style="font-size: 10px; font-weight: bold;">UNIT LABORATORIUM — RSIA IBI SURABAYA</div>
+        <p style="margin-top: 4px;">Periode: {{ \Carbon\Carbon::parse($tgl_mulai)->format('d/m/Y') }} s/d {{ \Carbon\Carbon::parse($tgl_selesai)->format('d/m/Y') }}</p>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th width="20">No</th>
-                <th width="70">Tgl Periksa</th>
+                <th width="18" class="text-center">No.</th>
+                <th width="40" class="text-center">No.RM</th>
                 <th>Nama Pasien</th>
-                <th width="70">Jenis Bayar</th>
+                <th>Dokter Perujuk</th>
+                <th width="65" class="text-center">No.Order</th>
+                <th width="55" class="text-center">Kode Periksa</th>
                 <th>Pemeriksaan</th>
-                <th width="60">No. RM</th>
-                <th width="40" class="text-center">Unit</th>
-                <th width="60">Jam Masuk</th>
-                <th width="60">Jam Hasil</th>
-                <th width="60" class="text-center">Total Waktu</th>
-                <th width="70" class="text-center">Status</th>
+                <th width="80" class="text-center">Jam Permintaan</th>
+                <th width="80" class="text-center">Jam Sampel</th>
+                <th width="80" class="text-center">Jam Hasil</th>
+                <th width="55" class="text-right">Permintaan-Sampel(m)</th>
+                <th width="55" class="text-right">Sampel-Hasil(m)</th>
+                <th width="55" class="text-right">Permintaan-Hasil(m)</th>
             </tr>
         </thead>
         <tbody>
             @forelse($data as $index => $item)
-                <tr>
+                @php
+                    $tPermintaan = !empty($item->jam_permintaan_full) ? strtotime($item->jam_permintaan_full) : null;
+                    $tSampel     = !empty($item->jam_sampel_full) ? strtotime($item->jam_sampel_full) : null;
+                    $tHasil      = !empty($item->jam_hasil_full) ? strtotime($item->jam_hasil_full) : null;
+
+                    $psMin = ($tSampel && $tPermintaan) ? number_format(($tSampel - $tPermintaan) / 60, 2) : '0.00';
+                    $shMin = ($tHasil && $tSampel) ? number_format(($tHasil - $tSampel) / 60, 2) : '0.00';
+                    $phMin = ($tHasil && $tPermintaan) ? number_format(($tHasil - $tPermintaan) / 60, 2) : '0.00';
+                @endphp
+                <tr style="{{ $index % 2 == 1 ? 'background-color: #f9fbf9;' : '' }}">
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ \Carbon\Carbon::parse($item->tgl_sampel)->format('d/m/Y') }}</td>
-                    <td>{{ $item->nm_pasien }}</td>
-                    <td>{{ $item->png_jawab }}</td>
-                    <td>{{ $item->pemeriksaan }}</td>
                     <td class="text-center">{{ $item->no_rkm_medis }}</td>
-                    <td class="text-center">{{ strtoupper($item->status) }}</td>
-                    <td class="text-center">{{ $item->jam_sampel }}</td>
-                    <td class="text-center">{{ $item->jam_hasil }}</td>
-                    <td class="text-center">
-                        @php
-                            $parts = explode(':', $item->total_waktu);
-                            $hours = (int)($parts[0] ?? 0);
-                            $minutes = (int)($parts[1] ?? 0);
-                            $seconds = (int)($parts[2] ?? 0);
-                            $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
-                            $isTepat = $totalSeconds < 3600;
-                        @endphp
-                        {{ $hours }} jam {{ $minutes }} menit {{ $seconds }} detik
-                    </td>
-                    <td class="text-center">
-                        @if($isTepat)
-                            Tepat Waktu
-                        @else
-                            <span style="color: red; font-weight: bold;">Tidak Sesuai</span>
-                        @endif
-                    </td>
+                    <td><strong>{{ strtoupper($item->nm_pasien) }}</strong></td>
+                    <td>{{ $item->nm_dokter_perujuk ?: '-' }}</td>
+                    <td class="text-center" style="font-family: monospace;">{{ $item->noorder }}</td>
+                    <td class="text-center" style="font-family: monospace;">{{ $item->kd_jenis_prw ?: '-' }}</td>
+                    <td>{{ $item->pemeriksaan ?: '-' }}</td>
+                    <td class="text-center">{{ $item->jam_permintaan_full ?: '-' }}</td>
+                    <td class="text-center">{{ $item->jam_sampel_full ?: '-' }}</td>
+                    <td class="text-center">{{ $item->jam_hasil_full ?: '-' }}</td>
+                    <td class="text-right">{{ $psMin }}</td>
+                    <td class="text-right">{{ $shMin }}</td>
+                    <td class="text-right">{{ $phMin }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="11" class="text-center">Tidak ada data.</td>
+                    <td colspan="13" class="text-center">Tidak ada data.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
+    {{-- Summary Table (Rata-rata & Interval) --}}
+    @if(!empty($summary))
+    <table class="summary-table">
+        <tr class="bg-gray">
+            <td width="200"><strong>Rata-rata (Menit)</strong></td>
+            <td width="10" class="text-center">:</td>
+            <td class="text-right" width="100"><strong>{{ number_format($summary['ps_avg'] ?? 0, 2) }}</strong></td>
+            <td class="text-right" width="100"><strong>{{ number_format($summary['sh_avg'] ?? 0, 2) }}</strong></td>
+            <td class="text-right" width="100"><strong>{{ number_format($summary['ph_avg'] ?? 0, 2) }}</strong></td>
+            <td></td>
+        </tr>
+        @foreach($summary['ranges'] ?? [] as $r)
+        <tr>
+            <td>{{ $r['label'] }}</td>
+            <td class="text-center">:</td>
+            <td class="text-right">{{ $r['ps'] }}</td>
+            <td class="text-right">{{ $r['sh'] }}</td>
+            <td class="text-right">{{ $r['ph'] }}</td>
+            <td></td>
+        </tr>
+        @endforeach
+    </table>
+    @endif
+
     <div class="footer">
-        Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}
+        Dicetak pada: {{ now()->format('d/m/Y H:i:s') }} | TARIKSIS — RSIA IBI Surabaya
     </div>
 </body>
 

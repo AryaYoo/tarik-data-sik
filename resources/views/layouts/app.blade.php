@@ -263,7 +263,7 @@
                         </div>
 
                         <!-- Laboratorium Menu -->
-                        <div x-data="{ open: {{ request()->routeIs('laboratorium.*') || request()->routeIs('laboratorium.kategori_pasien.*') ? 'true' : 'false' }} }"
+                        <div x-data="{ open: {{ request()->routeIs('laboratorium.*') || request()->routeIs('laboratorium.kategori_pasien.*') || request()->routeIs('laboratorium.detail_tindakan.*') ? 'true' : 'false' }} }"
                             class="space-y-1">
                             <button @click="open = !open"
                                 class="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl hover:bg-white/10 transition text-left">
@@ -299,6 +299,10 @@
                                 <a href="{{ route('laboratorium.kategori_pasien.index') }}"
                                     class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('laboratorium.kategori_pasien.*') ? 'text-white font-bold bg-white/20' : '' }}">
                                     Kategori Pasien
+                                </a>
+                                <a href="{{ route('laboratorium.detail_tindakan.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('laboratorium.detail_tindakan.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Detail Tindakan Laboratorium
                                 </a>
                             </div>
                         </div>

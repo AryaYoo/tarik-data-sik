@@ -69,10 +69,12 @@ class LaboratoriumController extends Controller
 
     public function index_gabungan(Request $request)
     {
-        $tgl_mulai = $request->tgl_mulai ?? date('Y-m-01');
+        $tgl_mulai   = $request->tgl_mulai   ?? date('Y-m-01');
         $tgl_selesai = $request->tgl_selesai ?? date('Y-m-t');
-        $kd_pj = $request->kd_pj;
-        $ketepatan = $request->ketepatan;
+        $kd_pj       = $request->kd_pj;
+        $status      = $request->status;
+        $ketepatan   = $request->ketepatan;
+        $search      = $request->search;
 
         // Ambil filter kode periksa dari session (jika user pernah custom setting)
         $session_kode = session('lab_gabungan_selected_kode', null);
@@ -92,48 +94,96 @@ class LaboratoriumController extends Controller
         if ($request->has('tgl_mulai')) {
             // Log the extraction
             ExtractionLog::create([
-                'username' => Auth::user()->username ?? Auth::user()->name,
-                'filter_date' => $tgl_mulai,
+                'username'        => Auth::user()->username ?? Auth::user()->name,
+                'filter_date'     => $tgl_mulai,
                 'extraction_type' => 'Lab Gabungan',
             ]);
 
-            $data = $this->labRepository->getLabQuery('gabungan', $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list)->paginate(20);
+            $data = $this->labRepository
+                ->getLabGabunganQuery($tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list, $status, $search)
+                ->paginate(20);
             $data->appends($request->except('kode_periksa'));
 
-            // Hitung summary indikator (tanpa filter ketepatan agar total selalu mencerminkan semua data)
+            // Hitung summary indikator & statistik rata-rata & interval waktu
             $allRecords = $this->labRepository
-                ->getLabGabunganQuery($tgl_mulai, $tgl_selesai, $kd_pj, null, $kode_periksa_list)
+                ->getLabGabunganQuery($tgl_mulai, $tgl_selesai, $kd_pj, null, $kode_periksa_list, $status, $search)
                 ->get();
 
-            $tepatCount = $allRecords->filter(function ($item) {
-                if (empty($item->total_waktu) || empty($item->jam_hasil)) {
-                    return false;
-                }
-                $parts       = explode(':', $item->total_waktu ?? '');
-                $totalSeconds = ((int)($parts[0] ?? 0) * 3600)
-                              + ((int)($parts[1] ?? 0) * 60)
-                              + (int)($parts[2] ?? 0);
-                return $totalSeconds > 0 && $totalSeconds < 3600;
-            })->count();
-
-            $totalCount = $allRecords->count();
-            $tidakTepatCount = $totalCount - $tepatCount;
-            $ralanCount = $allRecords->where('status', 'ralan')->count();
-            $ranapCount = $allRecords->where('status', 'ranap')->count();
-
-            $summary_gabungan = [
-                'total'       => $totalCount,
-                'tepat'       => $tepatCount,
-                'tidak_tepat' => $tidakTepatCount,
-                'ralan'       => $ralanCount,
-                'ranap'       => $ranapCount,
-            ];
+            $summary_gabungan = $this->calculateGabunganSummary($allRecords);
         }
 
         return view('laboratorium.gabungan.index', compact(
-            'data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'ketepatan',
+            'data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'ketepatan', 'status', 'search',
             'availableKode', 'filter_kode_aktif', 'session_kode', 'summary_gabungan'
         ));
+    }
+
+    /**
+     * Hitung kalkulasi rata-rata & interval distribusi waktu tunggu gabungan
+     */
+    private function calculateGabunganSummary($allRecords)
+    {
+        $allRecords->transform(function ($item) {
+            $tPermintaan = !empty($item->jam_permintaan_full) ? strtotime($item->jam_permintaan_full) : null;
+            $tSampel     = !empty($item->jam_sampel_full) ? strtotime($item->jam_sampel_full) : null;
+            $tHasil      = !empty($item->jam_hasil_full) ? strtotime($item->jam_hasil_full) : null;
+
+            $item->ps_min = ($tSampel && $tPermintaan) ? round(($tSampel - $tPermintaan) / 60, 2) : 0;
+            $item->sh_min = ($tHasil && $tSampel) ? round(($tHasil - $tSampel) / 60, 2) : 0;
+            $item->ph_min = ($tHasil && $tPermintaan) ? round(($tHasil - $tPermintaan) / 60, 2) : 0;
+
+            return $item;
+        });
+
+        $totalCount = $allRecords->count();
+        $ps_avg     = $totalCount > 0 ? round($allRecords->avg('ps_min'), 2) : 0;
+        $sh_avg     = $totalCount > 0 ? round($allRecords->avg('sh_min'), 2) : 0;
+        $ph_avg     = $totalCount > 0 ? round($allRecords->avg('ph_min'), 2) : 0;
+
+        $ranges = [
+            [
+                'label' => '0 - 15 Menit',
+                'ps'    => $allRecords->filter(fn($i) => $i->ps_min <= 15)->count(),
+                'sh'    => $allRecords->filter(fn($i) => $i->sh_min <= 15)->count(),
+                'ph'    => $allRecords->filter(fn($i) => $i->ph_min <= 15)->count(),
+            ],
+            [
+                'label' => '>15 - <=30 Menit',
+                'ps'    => $allRecords->filter(fn($i) => $i->ps_min > 15 && $i->ps_min <= 30)->count(),
+                'sh'    => $allRecords->filter(fn($i) => $i->sh_min > 15 && $i->sh_min <= 30)->count(),
+                'ph'    => $allRecords->filter(fn($i) => $i->ph_min > 15 && $i->ph_min <= 30)->count(),
+            ],
+            [
+                'label' => '>30 - <=60 Menit',
+                'ps'    => $allRecords->filter(fn($i) => $i->ps_min > 30 && $i->ps_min <= 60)->count(),
+                'sh'    => $allRecords->filter(fn($i) => $i->sh_min > 30 && $i->sh_min <= 60)->count(),
+                'ph'    => $allRecords->filter(fn($i) => $i->ph_min > 30 && $i->ph_min <= 60)->count(),
+            ],
+            [
+                'label' => '>60 - <=120 Menit',
+                'ps'    => $allRecords->filter(fn($i) => $i->ps_min > 60 && $i->ps_min <= 120)->count(),
+                'sh'    => $allRecords->filter(fn($i) => $i->sh_min > 60 && $i->sh_min <= 120)->count(),
+                'ph'    => $allRecords->filter(fn($i) => $i->ph_min > 60 && $i->ph_min <= 120)->count(),
+            ],
+            [
+                'label' => '>120 Menit',
+                'ps'    => $allRecords->filter(fn($i) => $i->ps_min > 120)->count(),
+                'sh'    => $allRecords->filter(fn($i) => $i->sh_min > 120)->count(),
+                'ph'    => $allRecords->filter(fn($i) => $i->ph_min > 120)->count(),
+            ],
+        ];
+
+        return [
+            'total'       => $totalCount,
+            'ps_avg'      => $ps_avg,
+            'sh_avg'      => $sh_avg,
+            'ph_avg'      => $ph_avg,
+            'ranges'      => $ranges,
+            'tepat'       => $allRecords->filter(fn($i) => $i->ph_min < 60)->count(),
+            'tidak_tepat' => $allRecords->filter(fn($i) => $i->ph_min >= 60)->count(),
+            'ralan'       => $allRecords->filter(fn($i) => strtolower($i->status) == 'ralan')->count(),
+            'ranap'       => $allRecords->filter(fn($i) => strtolower($i->status) == 'ranap')->count(),
+        ];
     }
 
     /**
@@ -161,30 +211,61 @@ class LaboratoriumController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $tgl_mulai = $request->tgl_mulai;
+        $tgl_mulai   = $request->tgl_mulai;
         $tgl_selesai = $request->tgl_selesai;
-        $type = $request->type; // ralan, ranap, gabungan
-        $kd_pj = $request->kd_pj;
-        $ketepatan = $request->ketepatan;
+        $type        = $request->type; // ralan, ranap, gabungan
+        $kd_pj       = $request->kd_pj;
+        $ketepatan   = $request->ketepatan;
+        $status      = $request->status;
+        $search      = $request->search;
 
-        $kode_periksa_list = $type === 'gabungan' ? session('lab_gabungan_selected_kode', null) : null;
+        if ($type === 'gabungan') {
+            $kode_periksa_list = session('lab_gabungan_selected_kode', null);
+            $data = $this->labRepository
+                ->getLabGabunganQuery($tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list, $status, $search)
+                ->get();
+            $summary = $this->calculateGabunganSummary($data);
 
-        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list)->get();
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\WaktuTungguGabunganExport($data, $summary, $tgl_mulai, $tgl_selesai),
+                'lama-pelayanan-lab-patologi-klinis-' . now()->format('Y-m-d') . '.xlsx'
+            );
+        }
 
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\LaboratoriumExport($data, strtoupper($type)), 'waktu-tunggu-lab-' . $type . '-' . now()->format('Y-m-d') . '.xlsx');
+        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan)->get();
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\LaboratoriumExport($data, strtoupper($type)),
+            'waktu-tunggu-lab-' . $type . '-' . now()->format('Y-m-d') . '.xlsx'
+        );
     }
 
     public function exportPdf(Request $request)
     {
-        $tgl_mulai = $request->tgl_mulai;
+        $tgl_mulai   = $request->tgl_mulai;
         $tgl_selesai = $request->tgl_selesai;
-        $type = $request->type;
-        $kd_pj = $request->kd_pj;
-        $ketepatan = $request->ketepatan;
+        $type        = $request->type;
+        $kd_pj       = $request->kd_pj;
+        $ketepatan   = $request->ketepatan;
+        $status      = $request->status;
+        $search      = $request->search;
 
-        $kode_periksa_list = $type === 'gabungan' ? session('lab_gabungan_selected_kode', null) : null;
+        if ($type === 'gabungan') {
+            $kode_periksa_list = session('lab_gabungan_selected_kode', null);
+            $data = $this->labRepository
+                ->getLabGabunganQuery($tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list, $status, $search)
+                ->get();
+            $summary = $this->calculateGabunganSummary($data);
 
-        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan, $kode_periksa_list)->get();
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                'laboratorium.gabungan.pdf',
+                compact('data', 'summary', 'tgl_mulai', 'tgl_selesai')
+            )->setPaper('a4', 'landscape');
+
+            return $pdf->download('lama-pelayanan-lab-patologi-klinis-' . now()->format('Y-m-d') . '.pdf');
+        }
+
+        $data = $this->labRepository->getLabQuery($type, $tgl_mulai, $tgl_selesai, $kd_pj, $ketepatan)->get();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView("laboratorium.$type.pdf", compact('data', 'tgl_mulai', 'tgl_selesai'));
         return $pdf->download('waktu-tunggu-lab-' . $type . '-' . now()->format('Y-m-d') . '.pdf');
@@ -306,4 +387,98 @@ class LaboratoriumController extends Controller
 
         return $pdf->download('kategori-pasien-lab-' . now()->format('Y-m-d') . '.pdf');
     }
+
+    public function detailTindakan(Request $request)
+    {
+        $tgl_mulai   = $request->tgl_mulai   ?? date('Y-m-01');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-t');
+        $kd_pj       = $request->kd_pj;
+        $status      = $request->status;
+        $jk          = $request->jk;
+        $search      = $request->search;
+
+        $penjabs = DB::table('penjab')->select('kd_pj', 'png_jawab')->orderBy('png_jawab', 'asc')->get();
+
+        $data    = null;
+        $summary = [];
+
+        if ($request->has('tgl_mulai')) {
+            ExtractionLog::create([
+                'username'        => Auth::user()->username ?? Auth::user()->name,
+                'filter_date'     => $tgl_mulai,
+                'extraction_type' => 'Lab Detail Tindakan',
+            ]);
+
+            $data = $this->labRepository
+                ->getDetailTindakanQuery($tgl_mulai, $tgl_selesai, $kd_pj, $status, $search, $jk)
+                ->paginate(20);
+            $data->appends($request->all());
+
+            // Summary metrics
+            $allData = $this->labRepository
+                ->getDetailTindakanQuery($tgl_mulai, $tgl_selesai, $kd_pj, $status, $search, $jk)
+                ->get();
+
+            $totalTindakan  = $allData->count();
+            $ralanCount     = $allData->where('status', 'Ralan')->count();
+            $ranapCount     = $allData->where('status', 'Ranap')->count();
+            $lakiCount      = $allData->where('jk', 'L')->count();
+            $perempuanCount = $allData->where('jk', 'P')->count();
+            $uniquePatients = $allData->pluck('no_rkm_medis')->unique()->count();
+
+            $summary = [
+                'total'           => $totalTindakan,
+                'ralan'           => $ralanCount,
+                'ranap'           => $ranapCount,
+                'laki'            => $lakiCount,
+                'perempuan'       => $perempuanCount,
+                'unique_patients' => $uniquePatients,
+            ];
+        }
+
+        return view('laboratorium.detail_tindakan.index', compact(
+            'data', 'tgl_mulai', 'tgl_selesai', 'penjabs', 'kd_pj', 'status', 'jk', 'search', 'summary'
+        ));
+    }
+
+    public function detailTindakanExportExcel(Request $request)
+    {
+        $tgl_mulai   = $request->tgl_mulai   ?? date('Y-m-01');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-t');
+        $kd_pj       = $request->kd_pj;
+        $status      = $request->status;
+        $jk          = $request->jk;
+        $search      = $request->search;
+
+        $data = $this->labRepository
+            ->getDetailTindakanQuery($tgl_mulai, $tgl_selesai, $kd_pj, $status, $search, $jk)
+            ->get();
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\DetailTindakanLabExport($data, $tgl_mulai, $tgl_selesai),
+            'detail-tindakan-lab-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
+    public function detailTindakanExportPdf(Request $request)
+    {
+        $tgl_mulai   = $request->tgl_mulai   ?? date('Y-m-01');
+        $tgl_selesai = $request->tgl_selesai ?? date('Y-m-t');
+        $kd_pj       = $request->kd_pj;
+        $status      = $request->status;
+        $jk          = $request->jk;
+        $search      = $request->search;
+
+        $data = $this->labRepository
+            ->getDetailTindakanQuery($tgl_mulai, $tgl_selesai, $kd_pj, $status, $search, $jk)
+            ->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'laboratorium.detail_tindakan.pdf',
+            compact('data', 'tgl_mulai', 'tgl_selesai')
+        )->setPaper('a4', 'landscape');
+
+        return $pdf->download('detail-tindakan-lab-' . now()->format('Y-m-d') . '.pdf');
+    }
 }
+

@@ -114,6 +114,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/laboratorium/kategori-pasien/reset-settings', [LaboratoriumController::class, 'kategoriPasienResetSettings'])->name('laboratorium.kategori_pasien.reset_settings');
     Route::get('/laboratorium/kategori-pasien/export/excel', [LaboratoriumController::class, 'kategoriPasienExportExcel'])->name('laboratorium.kategori_pasien.export.excel');
     Route::get('/laboratorium/kategori-pasien/export/pdf', [LaboratoriumController::class, 'kategoriPasienExportPdf'])->name('laboratorium.kategori_pasien.export.pdf');
+    Route::get('/laboratorium/detail-tindakan', [LaboratoriumController::class, 'detailTindakan'])->name('laboratorium.detail_tindakan.index');
+    Route::get('/laboratorium/detail-tindakan/export/excel', [LaboratoriumController::class, 'detailTindakanExportExcel'])->name('laboratorium.detail_tindakan.export.excel');
+    Route::get('/laboratorium/detail-tindakan/export/pdf', [LaboratoriumController::class, 'detailTindakanExportPdf'])->name('laboratorium.detail_tindakan.export.pdf');
 
     // Rekam Medis
     Route::get('/rekam-medis/kunjungan-rs', [RekamMedisController::class, 'kunjunganRs'])->name('rekam_medis.kunjungan_rs.index');
