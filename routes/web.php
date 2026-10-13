@@ -123,6 +123,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rekam-medis/kunjungan-rs/export/excel', [RekamMedisController::class, 'kunjunganRsExportExcel'])->name('rekam_medis.kunjungan_rs.export.excel');
     Route::get('/rekam-medis/kunjungan-rs/export/pdf', [RekamMedisController::class, 'kunjunganRsExportPdf'])->name('rekam_medis.kunjungan_rs.export.pdf');
     Route::get('/rekam-medis/kelengkapan-erm', [RekamMedisController::class, 'kelengkapanErm'])->name('rekam_medis.kelengkapan_erm.index');
+    Route::get('/rekam-medis/sensus-harian-ranap', [RekamMedisController::class, 'sensusHarianRanap'])->name('rekam_medis.sensus_harian_ranap.index');
+    Route::get('/rekam-medis/sensus-harian-ranap/export/excel', [RekamMedisController::class, 'sensusHarianRanapExportExcel'])->name('rekam_medis.sensus_harian_ranap.export.excel');
+    Route::get('/rekam-medis/sensus-harian-ranap/export/pdf', [RekamMedisController::class, 'sensusHarianRanapExportPdf'])->name('rekam_medis.sensus_harian_ranap.export.pdf');
 
     // Bedah Sentral
     Route::get('/bedah-sentral/ok-nst', [BedahSentralController::class, 'okNst'])->name('bedah_sentral.ok_nst.index');

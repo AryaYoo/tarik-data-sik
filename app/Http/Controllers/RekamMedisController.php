@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ExtractionLog;
 use App\Repositories\RekamMedisRepository;
+use App\Repositories\SensusHarianRanapRepository;
 use App\Exports\KunjunganRsExport;
+use App\Exports\SensusHarianRanapExport;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -13,10 +15,14 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class RekamMedisController extends Controller
 {
     protected $rekamMedisRepository;
+    protected $sensusHarianRanapRepository;
 
-    public function __construct(RekamMedisRepository $rekamMedisRepository)
-    {
+    public function __construct(
+        RekamMedisRepository $rekamMedisRepository,
+        SensusHarianRanapRepository $sensusHarianRanapRepository
+    ) {
         $this->rekamMedisRepository = $rekamMedisRepository;
+        $this->sensusHarianRanapRepository = $sensusHarianRanapRepository;
     }
 
     /**
@@ -117,5 +123,91 @@ class RekamMedisController extends Controller
     public function kelengkapanErm(Request $request)
     {
         return view('rekam_medis.kelengkapan_erm.index');
+    }
+
+    /**
+     * Tampilan Menu Sensus Harian Rawat Inap
+     */
+    public function sensusHarianRanap(Request $request)
+    {
+        $bangsalList = $this->sensusHarianRanapRepository->getBangsal();
+
+        $data = null;
+        if ($request->has('bulan')) {
+            $request->validate([
+                'bulan' => 'required|date_format:Y-m',
+            ]);
+
+            // Pencatatan aktivitas ke ExtractionLog (SOP 5)
+            ExtractionLog::create([
+                'username'        => Auth::user()->username,
+                'filter_date'     => $request->bulan . '-01',
+                'extraction_type' => 'Sensus Harian Rawat Inap',
+            ]);
+
+            $data = $this->sensusHarianRanapRepository->getSensusHarianRanap(
+                $request->bulan,
+                $request->kd_bangsal
+            );
+
+            // Ambil detail data pasien untuk tabel detail
+            $detailData = $this->sensusHarianRanapRepository->getDetailSensusPerHari(
+                $request->bulan,
+                $request->kd_bangsal
+            );
+
+            return view('rekam_medis.sensus_harian_ranap.index', compact(
+                'data',
+                'detailData',
+                'bangsalList'
+            ));
+        }
+
+        return view('rekam_medis.sensus_harian_ranap.index', compact(
+            'data',
+            'bangsalList'
+        ));
+    }
+
+    /**
+     * Ekspor Sensus Harian Rawat Inap ke Excel
+     */
+    public function sensusHarianRanapExportExcel(Request $request)
+    {
+        $request->validate([
+            'bulan' => 'required|date_format:Y-m',
+        ]);
+
+        $data = $this->sensusHarianRanapRepository->getSensusHarianRanap(
+            $request->bulan,
+            $request->kd_bangsal
+        );
+
+        return Excel::download(
+            new SensusHarianRanapExport($data, $request->bulan),
+            'sensus-harian-ranap-' . $request->bulan . '.xlsx'
+        );
+    }
+
+    /**
+     * Ekspor Sensus Harian Rawat Inap ke PDF
+     */
+    public function sensusHarianRanapExportPdf(Request $request)
+    {
+        $request->validate([
+            'bulan' => 'required|date_format:Y-m',
+        ]);
+
+        $data = $this->sensusHarianRanapRepository->getSensusHarianRanap(
+            $request->bulan,
+            $request->kd_bangsal
+        );
+
+        $pdf = Pdf::loadView('rekam_medis.sensus_harian_ranap.pdf', [
+            'data'  => $data,
+            'bulan' => $request->bulan,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('sensus-harian-ranap-' . $request->bulan . '.pdf');
     }
 }
