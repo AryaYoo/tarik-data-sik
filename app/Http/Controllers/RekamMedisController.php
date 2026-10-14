@@ -8,6 +8,7 @@ use App\Repositories\RekamMedisRepository;
 use App\Repositories\SensusHarianRanapRepository;
 use App\Exports\KunjunganRsExport;
 use App\Exports\SensusHarianRanapExport;
+use App\Exports\SensusHarianRanap2Export;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -209,5 +210,87 @@ class RekamMedisController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->download('sensus-harian-ranap-' . $request->bulan . '.pdf');
+    }
+
+    /**
+     * Tampilan Menu Sensus Harian Rawat Inap 2 (Rincian per Pasien)
+     */
+    public function sensusHarianRanap2(Request $request)
+    {
+        $bangsalList = $this->sensusHarianRanapRepository->getBangsal();
+
+        $data = null;
+        if ($request->has('bulan')) {
+            $request->validate([
+                'bulan' => 'required|date_format:Y-m',
+            ]);
+
+            // Pencatatan aktivitas ke ExtractionLog (SOP 5)
+            ExtractionLog::create([
+                'username'        => Auth::user()->username,
+                'filter_date'     => $request->bulan . '-01',
+                'extraction_type' => 'Sensus Harian Rawat Inap 2',
+            ]);
+
+            $data = $this->sensusHarianRanapRepository->getSensusHarianRanap2(
+                $request->bulan,
+                $request->kd_bangsal,
+                $request->jenis_pelayanan
+            );
+
+            return view('rekam_medis.sensus_harian_ranap_2.index', compact(
+                'data',
+                'bangsalList'
+            ));
+        }
+
+        return view('rekam_medis.sensus_harian_ranap_2.index', compact(
+            'data',
+            'bangsalList'
+        ));
+    }
+
+    /**
+     * Ekspor Sensus Harian Rawat Inap 2 ke Excel
+     */
+    public function sensusHarianRanap2ExportExcel(Request $request)
+    {
+        $request->validate([
+            'bulan' => 'required|date_format:Y-m',
+        ]);
+
+        $data = $this->sensusHarianRanapRepository->getSensusHarianRanap2(
+            $request->bulan,
+            $request->kd_bangsal,
+            $request->jenis_pelayanan
+        );
+
+        return Excel::download(
+            new SensusHarianRanap2Export($data, $request->bulan),
+            'sensus-harian-ranap-2-' . $request->bulan . '.xlsx'
+        );
+    }
+
+    /**
+     * Ekspor Sensus Harian Rawat Inap 2 ke PDF
+     */
+    public function sensusHarianRanap2ExportPdf(Request $request)
+    {
+        $request->validate([
+            'bulan' => 'required|date_format:Y-m',
+        ]);
+
+        $data = $this->sensusHarianRanapRepository->getSensusHarianRanap2(
+            $request->bulan,
+            $request->kd_bangsal,
+            $request->jenis_pelayanan
+        );
+
+        $pdf = Pdf::loadView('rekam_medis.sensus_harian_ranap_2.pdf', [
+            'data'  => $data,
+            'bulan' => $request->bulan,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('sensus-harian-ranap-2-' . $request->bulan . '.pdf');
     }
 }

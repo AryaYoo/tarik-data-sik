@@ -263,6 +263,10 @@
                                     class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('rekam_medis.sensus_harian_ranap.*') ? 'text-white font-bold bg-white/20' : '' }}">
                                     Sensus Harian Rawat Inap
                                 </a>
+                                <a href="{{ route('rekam_medis.sensus_harian_ranap_2.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('rekam_medis.sensus_harian_ranap_2.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Sensus Harian Rawat Inap 2
+                                </a>
                             </div>
                         </div>
 

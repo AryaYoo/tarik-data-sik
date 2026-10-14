@@ -126,6 +126,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rekam-medis/sensus-harian-ranap', [RekamMedisController::class, 'sensusHarianRanap'])->name('rekam_medis.sensus_harian_ranap.index');
     Route::get('/rekam-medis/sensus-harian-ranap/export/excel', [RekamMedisController::class, 'sensusHarianRanapExportExcel'])->name('rekam_medis.sensus_harian_ranap.export.excel');
     Route::get('/rekam-medis/sensus-harian-ranap/export/pdf', [RekamMedisController::class, 'sensusHarianRanapExportPdf'])->name('rekam_medis.sensus_harian_ranap.export.pdf');
+    Route::get('/rekam-medis/sensus-harian-ranap-2', [RekamMedisController::class, 'sensusHarianRanap2'])->name('rekam_medis.sensus_harian_ranap_2.index');
+    Route::get('/rekam-medis/sensus-harian-ranap-2/export/excel', [RekamMedisController::class, 'sensusHarianRanap2ExportExcel'])->name('rekam_medis.sensus_harian_ranap_2.export.excel');
+    Route::get('/rekam-medis/sensus-harian-ranap-2/export/pdf', [RekamMedisController::class, 'sensusHarianRanap2ExportPdf'])->name('rekam_medis.sensus_harian_ranap_2.export.pdf');
 
     // Bedah Sentral
     Route::get('/bedah-sentral/ok-nst', [BedahSentralController::class, 'okNst'])->name('bedah_sentral.ok_nst.index');
