@@ -111,9 +111,9 @@ class LaboratoriumRepository
         if ($ketepatan) {
             $diffSql = "TIMESTAMPDIFF(SECOND, CONCAT(permintaan_lab.tgl_sampel, ' ', permintaan_lab.jam_sampel), IF(permintaan_lab.tgl_hasil != '0000-00-00' AND permintaan_lab.jam_hasil != '00:00:00', CONCAT(permintaan_lab.tgl_hasil, ' ', permintaan_lab.jam_hasil), CONCAT(MAX(periksa_lab.tgl_periksa), ' ', MAX(periksa_lab.jam))))";
             if ($ketepatan === 'tepat') {
-                $query->havingRaw("$diffSql < 3600");
+                $query->havingRaw("$diffSql < 7200");
             } elseif ($ketepatan === 'tidak_tepat') {
-                $query->havingRaw("$diffSql >= 3600");
+                $query->havingRaw("$diffSql >= 7200");
             }
         }
 

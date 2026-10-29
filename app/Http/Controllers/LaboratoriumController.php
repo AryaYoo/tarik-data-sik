@@ -179,8 +179,8 @@ class LaboratoriumController extends Controller
             'sh_avg'      => $sh_avg,
             'ph_avg'      => $ph_avg,
             'ranges'      => $ranges,
-            'tepat'       => $allRecords->filter(fn($i) => $i->ph_min < 60)->count(),
-            'tidak_tepat' => $allRecords->filter(fn($i) => $i->ph_min >= 60)->count(),
+            'tepat'       => $allRecords->filter(fn($i) => $i->ph_min < 120)->count(),
+            'tidak_tepat' => $allRecords->filter(fn($i) => $i->ph_min >= 120)->count(),
             'ralan'       => $allRecords->filter(fn($i) => strtolower($i->status) == 'ralan')->count(),
             'ranap'       => $allRecords->filter(fn($i) => strtolower($i->status) == 'ranap')->count(),
         ];

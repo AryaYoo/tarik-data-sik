@@ -102,37 +102,25 @@
             {{-- Summary Indicator & Rata-rata Cards --}}
             @if(!empty($summary_gabungan))
             <div class="space-y-4">
-                {{-- Top 5 Metric Cards --}}
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {{-- Top Metric Cards (Hanya menampilkan Rata-rata S - H) --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {{-- Total Order --}}
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-1 col-span-2 md:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-1">
                         <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Order</div>
                         <div class="text-3xl font-black text-gray-800">{{ number_format($summary_gabungan['total'] ?? 0) }}</div>
                         <div class="text-xs text-gray-400 font-medium">Permintaan Lab</div>
                     </div>
-                    {{-- Rata-rata Permintaan -> Sampel --}}
-                    <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5 flex flex-col gap-1">
-                        <div class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Rata-rata P - S</div>
-                        <div class="text-3xl font-black text-amber-700">{{ number_format($summary_gabungan['ps_avg'] ?? 0, 2) }} <span class="text-sm font-bold">mnt</span></div>
-                        <div class="text-xs text-amber-600/80 font-medium">Permintaan &rarr; Sampel</div>
-                    </div>
-                    {{-- Rata-rata Sampel -> Hasil --}}
+                    {{-- Rata-rata Sampel -> Hasil (Yang tengah biru) --}}
                     <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex flex-col gap-1">
                         <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Rata-rata S - H</div>
                         <div class="text-3xl font-black text-blue-700">{{ number_format($summary_gabungan['sh_avg'] ?? 0, 2) }} <span class="text-sm font-bold">mnt</span></div>
                         <div class="text-xs text-blue-600/80 font-medium">Sampel &rarr; Hasil</div>
                     </div>
-                    {{-- Rata-rata Permintaan -> Hasil --}}
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 flex flex-col gap-1">
-                        <div class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Rata-rata P - H</div>
-                        <div class="text-3xl font-black text-indigo-700">{{ number_format($summary_gabungan['ph_avg'] ?? 0, 2) }} <span class="text-sm font-bold">mnt</span></div>
-                        <div class="text-xs text-indigo-500/80 font-medium">Permintaan &rarr; Hasil</div>
-                    </div>
                     {{-- Tepat Waktu --}}
                     <div class="bg-primary/5 border border-primary/15 rounded-2xl p-5 flex flex-col gap-1">
                         <div class="flex items-center justify-between mb-1">
                             <div class="text-[10px] font-black text-primary uppercase tracking-widest">Tepat Waktu</div>
-                            <span class="text-[9px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">&lt; 60 Mnt</span>
+                            <span class="text-[9px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">&lt; 120 Mnt</span>
                         </div>
                         <div class="text-3xl font-black text-primary">{{ number_format($summary_gabungan['tepat'] ?? 0) }}</div>
                         @if(($summary_gabungan['total'] ?? 0) > 0)
