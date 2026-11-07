@@ -59,20 +59,16 @@ class PelayananIbuHamilExport implements FromCollection, WithHeadings, WithMappi
         // 2. NIK
         $nik = $row->no_ktp ?: '-';
 
-        // 3. Nama Suami
+        // 3. Nama Suami (Hanya ambil jika hubungan keluarga atau penanggung jawab benar-benar SUAMI)
         $namaSuami = '-';
-        if (!empty($row->keluarga) && strtoupper($row->keluarga) === 'SUAMI' && !empty($row->namakeluarga)) {
-            $namaSuami = $row->namakeluarga;
-        } elseif (!empty($row->hubunganpj) && strtoupper($row->hubunganpj) === 'SUAMI' && !empty($row->p_jawab)) {
-            $namaSuami = $row->p_jawab;
-        } elseif (!empty($row->namakeluarga)) {
-            $namaSuami = $row->namakeluarga;
-        } elseif (!empty($row->p_jawab)) {
-            $namaSuami = $row->p_jawab;
+        if (!empty($row->keluarga) && strtoupper(trim($row->keluarga)) === 'SUAMI' && !empty($row->namakeluarga)) {
+            $namaSuami = trim($row->namakeluarga);
+        } elseif (!empty($row->hubunganpj) && strtoupper(trim($row->hubunganpj)) === 'SUAMI' && !empty($row->p_jawab)) {
+            $namaSuami = trim($row->p_jawab);
         }
         if ($namaSuami !== '-' && !preg_match('/^(tn\.|tn\s)/i', $namaSuami)) {
             $namaSuami = 'TN. ' . strtoupper($namaSuami);
-        } else {
+        } elseif ($namaSuami !== '-') {
             $namaSuami = strtoupper($namaSuami);
         }
 
