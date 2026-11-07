@@ -202,6 +202,14 @@
                                     class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('rawat_jalan.alamat_dan_kontak.index') ? 'text-white font-bold bg-white/20' : '' }}">
                                     Alamat dan Kontak
                                 </a>
+                                <a href="{{ route('rawat_jalan.pelayanan_ibu_hamil.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('rawat_jalan.pelayanan_ibu_hamil.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Pelayanan Ibu Hamil
+                                </a>
+                                <a href="{{ route('rawat_jalan.kesehatan_ibu_maternal.index') }}"
+                                    class="block py-2 px-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('rawat_jalan.kesehatan_ibu_maternal.*') ? 'text-white font-bold bg-white/20' : '' }}">
+                                    Kesehatan Ibu (Maternal)
+                                </a>
                             </div>
                         </div>
 
@@ -436,11 +444,13 @@
 
     <!-- Floating Help Button -->
     <a href="http://192.168.100.177/mastolongmas/public/login" target="_blank"
-        class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 hover:scale-105 transition-all duration-300 flex items-center gap-3 group z-50 border-4 border-white">
+        title="Laporkan Ketidakakuratan Data"
+        class="fixed bottom-5 right-5 bg-blue-600 text-white p-2.5 rounded-full shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-300 flex items-center group z-50 border-2 border-white">
         <span
-            class="font-bold hidden group-hover:block transition-all whitespace-nowrap text-sm uppercase tracking-wider">Butuh
-            Bantuan?</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:px-2 transition-all duration-300 whitespace-nowrap text-xs font-bold tracking-tight">
+            Laporkan Ketidakakuratan Data
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>

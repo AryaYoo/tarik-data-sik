@@ -70,4 +70,62 @@ class RawatJalanController extends Controller
         $pdf = Pdf::loadView('rawat_jalan.alamat_dan_kontak.pdf', compact('data'));
         return $pdf->download('alamat-kontak-ralan-' . now()->format('Y-m-d') . '.pdf');
     }
+
+    public function pelayananIbuHamil(Request $request)
+    {
+        $poliklinikList = $this->rawatJalanRepository->getPoliklinik();
+
+        $data = null;
+        if ($request->has('tgl_mulai') && $request->has('tgl_selesai')) {
+            $request->validate([
+                'tgl_mulai' => 'required|date',
+                'tgl_selesai' => 'required|date|after_or_equal:tgl_mulai',
+            ]);
+
+            // Log extraction sesuai SOP
+            ExtractionLog::create([
+                'username' => Auth::user()->username ?? 'system',
+                'filter_date' => $request->tgl_mulai,
+                'extraction_type' => 'Pelayanan Ibu Hamil Rawat Jalan',
+            ]);
+
+            $data = $this->rawatJalanRepository->getPelayananIbuHamil(
+                $request->tgl_mulai,
+                $request->tgl_selesai,
+                $request->kd_poli
+            )->paginate(15);
+
+            $data->appends($request->all());
+        }
+
+        return view('rawat_jalan.pelayanan_ibu_hamil.index', compact('data', 'poliklinikList'));
+    }
+
+    public function pelayananIbuHamilExportExcel(Request $request)
+    {
+        $data = $this->rawatJalanRepository->getPelayananIbuHamil(
+            $request->tgl_mulai,
+            $request->tgl_selesai,
+            $request->kd_poli
+        )->get();
+
+        return Excel::download(
+            new \App\Exports\PelayananIbuHamilExport($data),
+            'pelayanan-ibu-hamil-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
+    public function pelayananIbuHamilExportPdf(Request $request)
+    {
+        $data = $this->rawatJalanRepository->getPelayananIbuHamil(
+            $request->tgl_mulai,
+            $request->tgl_selesai,
+            $request->kd_poli
+        )->get();
+
+        $pdf = Pdf::loadView('rawat_jalan.pelayanan_ibu_hamil.pdf', compact('data'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('pelayanan-ibu-hamil-' . now()->format('Y-m-d') . '.pdf');
+    }
 }

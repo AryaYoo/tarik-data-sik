@@ -23,6 +23,7 @@ use App\Http\Controllers\LaboratoriumController;
 use App\Http\Controllers\FarmasiController;
 use App\Http\Controllers\HargaBarangController;
 use App\Http\Controllers\RawatJalanController;
+use App\Http\Controllers\MaternalController;
 use App\Http\Controllers\RekamMedisController;
 use App\Http\Controllers\BedahSentralController;
 
@@ -53,6 +54,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/rawat-jalan/alamat-dan-kontak', [RawatJalanController::class, 'alamatDanKontak'])->name('rawat_jalan.alamat_dan_kontak.index');
     Route::get('/rawat-jalan/alamat-dan-kontak/export/excel', [RawatJalanController::class, 'alamatDanKontakExportExcel'])->name('rawat_jalan.alamat_dan_kontak.export.excel');
     Route::get('/rawat-jalan/alamat-dan-kontak/export/pdf', [RawatJalanController::class, 'alamatDanKontakExportPdf'])->name('rawat_jalan.alamat_dan_kontak.export.pdf');
+    Route::get('/rawat-jalan/pelayanan-ibu-hamil', [RawatJalanController::class, 'pelayananIbuHamil'])->name('rawat_jalan.pelayanan_ibu_hamil.index');
+    Route::get('/rawat-jalan/pelayanan-ibu-hamil/export/excel', [RawatJalanController::class, 'pelayananIbuHamilExportExcel'])->name('rawat_jalan.pelayanan_ibu_hamil.export.excel');
+    Route::get('/rawat-jalan/pelayanan-ibu-hamil/export/pdf', [RawatJalanController::class, 'pelayananIbuHamilExportPdf'])->name('rawat_jalan.pelayanan_ibu_hamil.export.pdf');
+    Route::get('/rawat-jalan/kesehatan-ibu-maternal', [MaternalController::class, 'index'])->name('rawat_jalan.kesehatan_ibu_maternal.index');
+    Route::get('/rawat-jalan/kesehatan-ibu-maternal/export/excel', [MaternalController::class, 'exportExcel'])->name('rawat_jalan.kesehatan_ibu_maternal.export.excel');
+    Route::get('/rawat-jalan/kesehatan-ibu-maternal/export/pdf', [MaternalController::class, 'exportPdf'])->name('rawat_jalan.kesehatan_ibu_maternal.export.pdf');
 
     // Pemberian Obat dan BHP
     Route::get('/pemberian-obat', [PemberianObatController::class, 'index'])->name('pemberian_obat.index');
