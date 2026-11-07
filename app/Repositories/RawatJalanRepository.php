@@ -49,36 +49,33 @@ class RawatJalanRepository
             ->leftJoin('penilaian_medis_ralan_kandungan', 'reg_periksa.no_rawat', '=', 'penilaian_medis_ralan_kandungan.no_rawat')
             ->where('reg_periksa.status_lanjut', 'Ralan')
             ->whereBetween('reg_periksa.tgl_registrasi', [$startDate, $endDate])
-            ->where('pasien.jk', 'P') // Wajib Perempuan
-            ->where(function ($q) {
-                // Usia reproduktif (bukan balita/anak-anak)
-                $q->where(function ($sq) {
-                    $sq->where('reg_periksa.sttsumur', 'Th')
-                       ->where('reg_periksa.umurdaftar', '>=', 10);
-                })->orWhereRaw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, reg_periksa.tgl_registrasi) >= 10");
-            })
-            ->where(function ($q) {
-                // Wajib memiliki catatan pemeriksaan antenatal / kehamilan:
-                // 1. Ada asesmen awal keperawatan kebidanan (ANC)
-                $q->whereNotNull('penilaian_awal_keperawatan_kebidanan.no_rawat')
-                // 2. Atau ada TFU / diagnosa kehamilan pada asesmen medis kandungan
-                  ->orWhere(function ($sub) {
-                      $sub->whereNotNull('penilaian_medis_ralan_kandungan.no_rawat')
-                          ->where(function ($ss) {
-                              $ss->where('penilaian_medis_ralan_kandungan.tfu', '!=', '')
-                                ->orWhere('penilaian_medis_ralan_kandungan.diagnosis', 'LIKE', '%G%P%A%')
-                                ->orWhere('penilaian_medis_ralan_kandungan.diagnosis', 'LIKE', '%hamil%')
-                                ->orWhere('penilaian_medis_ralan_kandungan.diagnosis', 'LIKE', '%gravid%');
-                          });
-                  })
-                // 3. Atau ada diagnosa kehamilan ICD-10 (O00-O99)
-                  ->orWhereExists(function ($sub) {
-                      $sub->select(DB::raw(1))
-                          ->from('diagnosa_pasien')
-                          ->whereRaw('diagnosa_pasien.no_rawat = reg_periksa.no_rawat')
-                          ->where('diagnosa_pasien.kd_penyakit', 'LIKE', 'O%');
-                  });
-            });
+            ->where('pasien.jk', 'P');
+
+        $query->where(function ($q) {
+            $q->where(function ($sq) {
+                $sq->where('reg_periksa.sttsumur', 'Th')
+                   ->where('reg_periksa.umurdaftar', '>=', 10);
+            })->orWhereRaw("TIMESTAMPDIFF(YEAR, pasien.tgl_lahir, reg_periksa.tgl_registrasi) >= 10");
+        });
+
+        $query->where(function ($q) {
+            $q->whereNotNull('penilaian_awal_keperawatan_kebidanan.no_rawat')
+              ->orWhere(function ($sub) {
+                  $sub->whereNotNull('penilaian_medis_ralan_kandungan.no_rawat')
+                      ->where(function ($ss) {
+                          $ss->where('penilaian_medis_ralan_kandungan.tfu', '!=', '')
+                            ->orWhere('penilaian_medis_ralan_kandungan.diagnosis', 'LIKE', '%G%P%A%')
+                            ->orWhere('penilaian_medis_ralan_kandungan.diagnosis', 'LIKE', '%hamil%')
+                            ->orWhere('penilaian_medis_ralan_kandungan.diagnosis', 'LIKE', '%gravid%');
+                      });
+              })
+              ->orWhereExists(function ($sub) {
+                  $sub->select(DB::raw(1))
+                      ->from('diagnosa_pasien')
+                      ->whereRaw('diagnosa_pasien.no_rawat = reg_periksa.no_rawat')
+                      ->where('diagnosa_pasien.kd_penyakit', 'LIKE', 'O%');
+              });
+        });
 
         if ($kd_poli) {
             $query->where('reg_periksa.kd_poli', $kd_poli);

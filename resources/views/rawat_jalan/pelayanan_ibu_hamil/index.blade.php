@@ -114,17 +114,19 @@
                                         $namaPasien = strtoupper($namaPasien);
                                     }
 
-                                    // Nama Suami (Hanya ambil jika hubungan keluarga atau penanggung jawab benar-benar SUAMI)
+                                    // Nama Suami
                                     $namaSuami = '-';
                                     if (!empty($row->keluarga) && strtoupper(trim($row->keluarga)) === 'SUAMI' && !empty($row->namakeluarga)) {
                                         $namaSuami = trim($row->namakeluarga);
-                                    } elseif (!empty($row->hubunganpj) && strtoupper(trim($row->hubunganpj)) === 'SUAMI' && !empty($row->p_jawab)) {
+                                    } else if (!empty($row->hubunganpj) && strtoupper(trim($row->hubunganpj)) === 'SUAMI' && !empty($row->p_jawab)) {
                                         $namaSuami = trim($row->p_jawab);
                                     }
-                                    if ($namaSuami !== '-' && !preg_match('/^(tn\.|tn\s)/i', $namaSuami)) {
-                                        $namaSuami = 'TN. ' . strtoupper($namaSuami);
-                                    } elseif ($namaSuami !== '-') {
+
+                                    if ($namaSuami !== '-') {
                                         $namaSuami = strtoupper($namaSuami);
+                                        if (!str_starts_with($namaSuami, 'TN.') && !str_starts_with($namaSuami, 'TN ')) {
+                                            $namaSuami = 'TN. ' . $namaSuami;
+                                        }
                                     }
 
                                     // Alamat Lengkap
