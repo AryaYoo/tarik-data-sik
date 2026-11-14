@@ -211,7 +211,10 @@
                                 @endphp
                                 <tr class="hover:bg-gray-50/50 transition-colors">
                                     <td class="px-4 py-4 text-center font-bold text-gray-500">{{ $offset + $index + 1 }}.</td>
-                                    <td class="px-4 py-4 font-black text-gray-800">{{ $namaPasien }}</td>
+                                    <td class="px-4 py-4">
+                                        <div class="font-black text-gray-800">{{ $namaPasien }}</div>
+                                        <div class="mt-1 text-[10px] font-mono font-normal text-gray-500">{{ $row->no_rawat }}</div>
+                                    </td>
                                     <td class="px-4 py-4 font-mono text-gray-600">{{ $row->no_ktp ?: '-' }}</td>
                                     <td class="px-4 py-4 font-bold text-gray-700">{{ $namaSuami }}</td>
                                     <td class="px-4 py-4 text-gray-600 max-w-xs truncate" title="{{ $alamatLengkap }}">{{ $alamatLengkap }}</td>
@@ -413,4 +416,3 @@
         }
     </script>
 @endsection
-
